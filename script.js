@@ -12,6 +12,11 @@ const COLUMNS = [
     { id: 'notes',         label: 'Notes / Reminders', emoji: '⚪', color: '#94a3b8' },
 ];
 
+const TABS = [
+    { id: 'personal', label: 'Personal' },
+    { id: 'work',     label: 'Work' },
+];
+
 // Priority sort order (low number = higher priority = rendered first)
 const PRIORITY_ORDER  = { high: 0, medium: 1, low: 2 };
 const PRIORITY_LABELS = { high: 'High', medium: 'Medium', low: 'Low' };
@@ -21,6 +26,7 @@ let tasks        = [];          // array of task objects
 let editingId    = null;        // task ID currently being edited (null = new)
 let draggedId    = null;        // task ID being dragged
 let searchQuery  = '';          // live search string
+let activeTab    = 'personal';  // active tab filter
 
 // ── LocalStorage helpers ────────────────────────────────────────
 function saveTasks() {
@@ -33,6 +39,7 @@ function loadTasks() {
     } catch {
         tasks = [];
     }
+    tasks = tasks.map(t => t.tab ? t : { ...t, tab: 'personal' });
 }
 
 // ── Utility ─────────────────────────────────────────────────────
@@ -72,7 +79,7 @@ function isOverdue(task) {
 // Get all tasks for a column, sorted by priority
 function getByColumn(columnId) {
     return tasks
-        .filter(t => t.column === columnId)
+        .filter(t => t.column === columnId && t.tab === activeTab)
         .sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
 }
 
@@ -284,7 +291,7 @@ function saveTask() {
     if (editingId) {
         editTask(editingId, data);
     } else {
-        addTask(data);
+        addTask({ ...data, tab: activeTab });
     }
     closeModal();
 }
