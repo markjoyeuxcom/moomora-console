@@ -136,6 +136,8 @@ function renderTabs() {
     container.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             activeTab = btn.dataset.tab;
+            searchQuery = '';
+            document.getElementById('searchInput').value = '';
             renderTabs();
             renderBoard();
         });
@@ -379,7 +381,8 @@ function exportSummary() {
 // Auto-show the summary once per day on first load (only if tasks exist)
 function checkDailySummary() {
     const lastShown = localStorage.getItem('taskboard_last_summary');
-    if (lastShown !== today() && tasks.length > 0) {
+    const tabHasTasks = COLUMNS.some(col => getByColumn(col.id).length > 0);
+    if (lastShown !== today() && tabHasTasks) {
         localStorage.setItem('taskboard_last_summary', today());
         setTimeout(openSummary, 600); // short delay so board renders first
     }
