@@ -289,7 +289,7 @@ function saveTask() {
     };
 
     if (editingId) {
-        editTask(editingId, data);
+        editTask(editingId, data); // tab preserved from existing task via spread in editTask; Tab dropdown added in Task 3
     } else {
         addTask({ ...data, tab: activeTab });
     }
