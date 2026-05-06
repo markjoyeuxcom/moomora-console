@@ -128,6 +128,20 @@ function renderBoard() {
     setupDragDrop();
 }
 
+function renderTabs() {
+    const container = document.getElementById('tabs');
+    container.innerHTML = TABS.map(tab =>
+        `<button class="tab-btn ${activeTab === tab.id ? 'active' : ''}" data-tab="${tab.id}">${tab.label}</button>`
+    ).join('');
+    container.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            activeTab = btn.dataset.tab;
+            renderTabs();
+            renderBoard();
+        });
+    });
+}
+
 // Build a full column element
 function buildColumn(col) {
     const allTasks     = getByColumn(col.id);
@@ -432,6 +446,7 @@ function setupListeners() {
 
 function init() {
     loadTasks();
+    renderTabs();
     renderBoard();
     setupListeners();
     checkDailySummary();
