@@ -319,8 +319,9 @@ function buildSummary() {
     const dateLabel = new Date().toLocaleDateString('en-GB', {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
     });
+    const tabLabel = TABS.find(t => t.id === activeTab)?.label || activeTab;
 
-    let text = `Daily Summary — ${dateLabel}\n`;
+    let text = `Daily Summary (${tabLabel}) — ${dateLabel}\n`;
     text += '─'.repeat(44) + '\n\n';
 
     let hasContent = false;
