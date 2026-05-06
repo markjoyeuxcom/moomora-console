@@ -279,6 +279,7 @@ function openModal(taskId = null, defaultColumn = 'planned') {
     document.getElementById('taskPriority').value = task?.priority    || 'medium';
     document.getElementById('taskDueDate').value  = task?.dueDate     || '';
     document.getElementById('taskColumn').value   = task?.column      || defaultColumn;
+    document.getElementById('taskTab').value      = task?.tab         || activeTab;
 
     document.getElementById('taskModal').classList.remove('hidden');
     document.getElementById('taskTitle').focus();
@@ -300,12 +301,13 @@ function saveTask() {
         priority:    document.getElementById('taskPriority').value,
         dueDate:     document.getElementById('taskDueDate').value || null,
         column:      document.getElementById('taskColumn').value,
+        tab:         document.getElementById('taskTab').value,
     };
 
     if (editingId) {
-        editTask(editingId, data); // tab preserved from existing task via spread in editTask; Tab dropdown added in Task 3
+        editTask(editingId, data);
     } else {
-        addTask({ ...data, tab: activeTab });
+        addTask(data);
     }
     closeModal();
 }
