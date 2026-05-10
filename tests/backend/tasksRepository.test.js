@@ -1,0 +1,124 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  createTasksRepository,
+  normalizeTaskRow,
+  buildCreateTask,
+  buildUpdateTask,
+} from '../../server/tasksRepository.js';
+
+test('normalizeTaskRow maps database fields to API task fields', () => {
+  const task = normalizeTaskRow({
+    id: '11111111-1111-4111-8111-111111111111',
+    title: 'Back up CloudNativePG',
+    description: 'Verify backup schedule',
+    priority: 'high',
+    status: 'planned',
+    context: 'homelab',
+    due_date: '2026-05-11',
+    sort_order: 2,
+    archived_at: null,
+    created_at: '2026-05-10T10:00:00.000Z',
+    updated_at: '2026-05-10T10:00:00.000Z',
+  });
+
+  assert.deepEqual(task, {
+    id: '11111111-1111-4111-8111-111111111111',
+    title: 'Back up CloudNativePG',
+    description: 'Verify backup schedule',
+    priority: 'high',
+    status: 'planned',
+    context: 'homelab',
+    dueDate: '2026-05-11',
+    sortOrder: 2,
+    archivedAt: null,
+    createdAt: '2026-05-10T10:00:00.000Z',
+    updatedAt: '2026-05-10T10:00:00.000Z',
+  });
+});
+
+test('buildCreateTask returns parameterized insert query', () => {
+  const query = buildCreateTask({
+    title: 'Wire API adapter',
+    description: '',
+    priority: 'high',
+    status: 'in-progress',
+    context: 'homelab',
+    dueDate: '2026-05-12',
+    sortOrder: 0,
+  });
+
+  assert.match(query.text, /insert into tasks/);
+  assert.equal(query.values.length, 7);
+  assert.equal(query.values[0], 'Wire API adapter');
+});
+
+test('buildUpdateTask rejects empty updates', () => {
+  assert.throws(
+    () => buildUpdateTask('11111111-1111-4111-8111-111111111111', {}),
+    /No task fields provided/
+  );
+});
+
+test('listTasks filters active tasks by default', async () => {
+  const calls = [];
+  const repository = createTasksRepository({
+    async query(text, values) {
+      calls.push({ text, values });
+      return { rows: [] };
+    },
+  });
+
+  await repository.listTasks();
+
+  assert.match(calls[0].text, /archived_at is null/);
+});
+
+test('listTasks filters active tasks when requested', async () => {
+  const calls = [];
+  const repository = createTasksRepository({
+    async query(text, values) {
+      calls.push({ text, values });
+      return { rows: [] };
+    },
+  });
+
+  await repository.listTasks({ archived: false });
+
+  assert.match(calls[0].text, /archived_at is null/);
+});
+
+test('listTasks filters archived tasks when requested', async () => {
+  const calls = [];
+  const repository = createTasksRepository({
+    async query(text, values) {
+      calls.push({ text, values });
+      return { rows: [] };
+    },
+  });
+
+  await repository.listTasks({ archived: true });
+
+  assert.match(calls[0].text, /archived_at is not null/);
+});
+
+test('listTasks parameterizes context status and search filters', async () => {
+  const calls = [];
+  const repository = createTasksRepository({
+    async query(text, values) {
+      calls.push({ text, values });
+      return { rows: [] };
+    },
+  });
+
+  await repository.listTasks({
+    context: 'homelab',
+    status: 'planned',
+    q: 'backup',
+  });
+
+  assert.match(calls[0].text, /context = \$1/);
+  assert.match(calls[0].text, /status = \$2/);
+  assert.match(calls[0].text, /title ilike \$3 or description ilike \$3/);
+  assert.deepEqual(calls[0].values, ['homelab', 'planned', '%backup%']);
+});
