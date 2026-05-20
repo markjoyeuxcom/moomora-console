@@ -80,21 +80,31 @@ test('updateTask returns null on 404', async () => {
   assert.equal(await client.updateTask('x', { status: 'completed' }), null);
 });
 
-test('linkTaskDocument posts documentId in the body', async () => {
-  const fetch = recordingFetch(jsonResponse(201, { linked: true }));
+test('linkTaskDocument posts documentId and returns the updated linked-doc list', async () => {
+  // The real API returns 201/200 with the updated list of linked documents.
+  const fetch = recordingFetch(jsonResponse(201, [{ id: 'd1', title: 'Runbook' }]));
   const client = createMoomoraClient({ baseUrl: BASE, fetch });
-  await client.linkTaskDocument('t1', 'd1');
+  const result = await client.linkTaskDocument('t1', 'd1');
   const call = fetch.calls[0];
   assert.match(new URL(call.url).pathname, /\/api\/tasks\/t1\/documents$/);
+  assert.equal(call.options.method, 'POST');
   assert.deepEqual(JSON.parse(call.options.body), { documentId: 'd1' });
+  assert.deepEqual(result, [{ id: 'd1', title: 'Runbook' }]);
 });
 
-test('unlinkTaskDocument issues DELETE and tolerates 204 (null body)', async () => {
-  const fetch = recordingFetch(jsonResponse(204, undefined));
+test('unlinkTaskDocument issues DELETE and returns the updated linked-doc list', async () => {
+  // The real API returns 200 with the remaining linked documents (not 204).
+  const fetch = recordingFetch(jsonResponse(200, []));
   const client = createMoomoraClient({ baseUrl: BASE, fetch });
   const res = await client.unlinkTaskDocument('t1', 'd1');
-  assert.equal(res, null);
+  assert.deepEqual(res, []);
   assert.equal(fetch.calls[0].options.method, 'DELETE');
+});
+
+test('204 No Content responses resolve to null', async () => {
+  const fetch = recordingFetch(jsonResponse(204, undefined));
+  const client = createMoomoraClient({ baseUrl: BASE, fetch });
+  assert.equal(await client.unlinkTaskDocument('t1', 'd1'), null);
 });
 
 test('non-2xx (non-404) responses throw MoomoraApiError with status and message', async () => {

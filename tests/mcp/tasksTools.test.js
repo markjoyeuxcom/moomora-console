@@ -53,6 +53,25 @@ test('create_task forwards args to the client', async () => {
   assert.deepEqual(received, payload);
 });
 
+test('create_task applies priority/status defaults the API requires', async () => {
+  let received;
+  const client = { createTask: async (p) => { received = p; return { id: 'new', ...p }; } };
+  const tool = byName(createTaskTools(client), 'create_task');
+  await tool.handler({ title: 'Minimal', context: 'homelab' });
+  assert.deepEqual(received, {
+    priority: 'medium', status: 'planned', title: 'Minimal', context: 'homelab',
+  });
+});
+
+test('create_task lets explicit priority/status override the defaults', async () => {
+  let received;
+  const client = { createTask: async (p) => { received = p; return { id: 'new', ...p }; } };
+  const tool = byName(createTaskTools(client), 'create_task');
+  await tool.handler({ title: 'X', context: 'work', priority: 'high', status: 'in-progress' });
+  assert.equal(received.priority, 'high');
+  assert.equal(received.status, 'in-progress');
+});
+
 test('update_task rejects empty patch and bad UUID, maps missing to error', async () => {
   const ok = { updateTask: async (id, patch) => ({ id, ...patch }) };
   const tool = byName(createTaskTools(ok), 'update_task');

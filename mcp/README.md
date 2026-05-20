@@ -45,6 +45,13 @@ Writes: `create_document`, `update_document`, `create_task`, `update_task`,
 
 No archive, delete, reorder, or import tools are exposed.
 
+## Known limitations
+
+- `get_document` and `get_task` fetch the list endpoint and filter by id in the MCP
+  layer, because the API has no `GET /:id` detail route. This is fine at homelab scale
+  but is worth revisiting (e.g. adding a detail route) if the library or task set grows
+  large, since each call transfers the full active list to filter one record.
+
 ## Smoke test (manual)
 
 1. Start Moomora: `npm run demo` (API on `:3100`).

@@ -36,6 +36,15 @@ test('search_documents maps args to listDocuments and returns refs without bodie
   assert.equal(data[0].snippet, 'long runbook body');
 });
 
+test('search_documents allows an omitted query (browse by context/tags)', async () => {
+  let received;
+  const client = { listDocuments: async (filters) => { received = filters; return [SAMPLE_DOC]; } };
+  const tool = byName(createDocumentTools(client), 'search_documents');
+  const res = await tool.handler({ context: 'homelab' });
+  assert.deepEqual(received, { q: undefined, context: 'homelab', documentType: undefined });
+  assert.equal(JSON.parse(res.content[0].text).length, 1);
+});
+
 test('search_documents filters by tags client-side', async () => {
   const client = { listDocuments: async () => [SAMPLE_DOC] };
   const tool = byName(createDocumentTools(client), 'search_documents');

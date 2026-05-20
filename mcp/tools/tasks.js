@@ -54,7 +54,9 @@ export function createTaskTools(client) {
         dueDate: z.string().optional().describe('ISO date (YYYY-MM-DD) or empty.'),
       },
       handler: withErrorHandling(async (args) => {
-        const task = await client.createTask(args);
+        // The API requires priority and status on create; apply the documented
+        // defaults here so callers can omit them (args override these).
+        const task = await client.createTask({ priority: 'medium', status: 'planned', ...args });
         return okResult(task);
       }),
     },
