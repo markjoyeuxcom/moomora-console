@@ -4,8 +4,8 @@ import { readFile } from 'node:fs/promises';
 
 const styles = await readFile(new URL('../../public/styles.css', import.meta.url), 'utf8');
 
-test('Library browser reserves header, tag-filter drawer, and a scrollable document list row', () => {
-  assert.match(styles, /\.library-browser\s*\{[\s\S]*grid-template-rows:\s*auto auto minmax\(0,\s*1fr\);/);
+test('Library browser reserves header, tag-filter drawer, controls row, and a scrollable document list row', () => {
+  assert.match(styles, /\.library-browser\s*\{[\s\S]*grid-template-rows:\s*auto auto auto minmax\(0,\s*1fr\);/);
   assert.match(styles, /\.document-list\s*\{[\s\S]*overflow:\s*auto;/);
 });
 

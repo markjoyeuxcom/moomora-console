@@ -287,3 +287,67 @@ test('document form renders both desktop and mobile modal headers', () => {
   assert.match(html, /class="modal-header--mobile"/);
   assert.match(html, /<button[^>]*type="submit"[^>]*form="document-form"[^>]*>\[s\] save/);
 });
+
+test('renderLibraryHtml renders library-controls with type filter, sort, and group toggle', () => {
+  const html = renderLibraryHtml({
+    documents,
+    selectedDocumentId: 'doc-1',
+    typeFilter: 'all',
+    sortBy: 'updated',
+    groupByType: false,
+  });
+
+  assert.match(html, /class="library-controls"/);
+  assert.match(html, /data-library-type="all"/);
+  assert.match(html, /data-library-type="runbook"/);
+  assert.match(html, /data-library-type="note"/);
+  assert.match(html, /data-library-sort/);
+  assert.match(html, /data-action="toggle-library-group"/);
+  assert.match(html, /aria-pressed="false"[^>]*>group: off/);
+});
+
+test('renderLibraryHtml marks active type filter button with class on', () => {
+  const html = renderLibraryHtml({
+    documents,
+    typeFilter: 'runbook',
+  });
+  assert.match(html, /class="on"[^>]*data-library-type="runbook"/);
+  assert.doesNotMatch(html, /class="on"[^>]*data-library-type="all"/);
+});
+
+test('renderLibraryHtml shows correct selected sort option', () => {
+  const html = renderLibraryHtml({
+    documents,
+    sortBy: 'title',
+  });
+  assert.match(html, /<option value="title" selected>title<\/option>/);
+  assert.doesNotMatch(html, /<option value="updated" selected>/);
+});
+
+test('renderLibraryHtml renders group toggle as pressed when groupByType is true', () => {
+  const html = renderLibraryHtml({
+    documents,
+    groupByType: true,
+  });
+  assert.match(html, /aria-pressed="true"[^>]*>group: type/);
+});
+
+test('renderLibraryHtml renders document-group-header elements when groupByType is true', () => {
+  const html = renderLibraryHtml({
+    documents,
+    groupByType: true,
+  });
+  assert.match(html, /class="document-group-header"/);
+  assert.match(html, /Runbooks/);
+  assert.match(html, /Notes/);
+});
+
+test('renderLibraryHtml renders flat list when groupByType is false', () => {
+  const html = renderLibraryHtml({
+    documents,
+    groupByType: false,
+  });
+  assert.doesNotMatch(html, /class="document-group-header"/);
+  assert.match(html, /data-library-document-id="doc-1"/);
+  assert.match(html, /data-library-document-id="doc-2"/);
+});

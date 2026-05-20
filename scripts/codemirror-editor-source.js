@@ -20,7 +20,7 @@ import { applyMarkdownFormat } from '../public/js/markdownEditor.js';
 
 const operatorTheme = EditorView.theme({
   '&': { backgroundColor: '#0d0e0f', color: '#c8c8c8' },
-  '.cm-scroller': { fontFamily: '"JetBrains Mono", ui-monospace, monospace' },
+  '.cm-scroller': { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace' },
   '.cm-content': { caretColor: '#f8f2c6', padding: '14px' },
   '.cm-gutters': { backgroundColor: '#08090a', color: '#5a5d60', border: 'none', borderRight: '1px solid #1f2021' },
   '.cm-activeLineGutter': { backgroundColor: 'rgba(135, 215, 95, 0.06)', color: '#87d75f' },

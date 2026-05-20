@@ -36,6 +36,9 @@ export const state = {
   libraryTagQuery: '',
   areLibraryTagsExpanded: false,
   librarySavedViews: [],
+  libraryTypeFilter: 'all',
+  librarySortBy: 'updated',
+  libraryGroupByType: false,
   preferences: { ...DEFAULT_PREFERENCES },
   boardOpenSections: { 'high-priority': true, 'in-progress': true, planned: false, completed: false, notes: false },
 };

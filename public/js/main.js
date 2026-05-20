@@ -40,7 +40,7 @@ import { applyMarkdownFormat } from './markdownEditor.js';
 import { canPreserveEditorAfterDraftSave, documentDraftSavedPatch } from './documentDraftSave.js';
 import { updateDocumentLivePreview } from './documentLivePreview.js';
 import { mountCodeMirrorEditor } from '../vendor/codemirror-editor.js';
-import { filterDocumentsByTags, tagsForDocuments } from './libraryFilters.js';
+import { filterDocumentsByTags, filterDocumentsByType, sortDocuments, tagsForDocuments } from './libraryFilters.js';
 import { applyPreferences, loadPreferences, resetPreferences, savePreferences } from './preferences.js';
 import { isMobile } from './breakpoints.js';
 import {
@@ -103,14 +103,17 @@ function visibleDocumentsForCurrentView() {
   const query = state.searchQuery.trim().toLowerCase();
   const contextDocuments = state.documents.filter(document => document.context === state.activeContext);
   const taggedDocuments = filterDocumentsByTags(contextDocuments, state.activeLibraryTags);
-  if (!query) return taggedDocuments;
-  return taggedDocuments.filter((document) => [
-    document.title,
-    document.body,
-    document.documentType,
-    document.sourceFilename,
-    ...(document.tags || []),
-  ].some(value => String(value || '').toLowerCase().includes(query)));
+  const typeFilteredDocuments = filterDocumentsByType(taggedDocuments, state.libraryTypeFilter);
+  const searchedDocuments = query
+    ? typeFilteredDocuments.filter((document) => [
+        document.title,
+        document.body,
+        document.documentType,
+        document.sourceFilename,
+        ...(document.tags || []),
+      ].some(value => String(value || '').toLowerCase().includes(query)))
+    : typeFilteredDocuments;
+  return sortDocuments(searchedDocuments, state.librarySortBy);
 }
 
 function selectedDocument() {
@@ -363,6 +366,9 @@ function renderLibraryWorkspace(workspace) {
     isFocusMode: state.isDocumentFocusMode,
     isLibraryTagsDrawerOpen: state.isLibraryTagsDrawerOpen,
     isLibraryDocOpen: state.isLibraryDocOpen,
+    typeFilter: state.libraryTypeFilter,
+    sortBy: state.librarySortBy,
+    groupByType: state.libraryGroupByType,
   });
 
   const libraryWorkspaceElement = workspace.querySelector('.library-workspace');
@@ -378,6 +384,23 @@ function renderLibraryWorkspace(workspace) {
 
   workspace.querySelector('[data-action="close-library-doc"]')?.addEventListener('click', () => {
     setState({ isLibraryDocOpen: false });
+    renderWorkspace();
+  });
+
+  workspace.querySelectorAll('[data-library-type]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setState({ libraryTypeFilter: btn.dataset.libraryType });
+      renderWorkspace();
+    });
+  });
+
+  workspace.querySelector('[data-library-sort]')?.addEventListener('change', (event) => {
+    setState({ librarySortBy: event.target.value });
+    renderWorkspace();
+  });
+
+  workspace.querySelector('[data-action="toggle-library-group"]')?.addEventListener('click', () => {
+    setState({ libraryGroupByType: !state.libraryGroupByType });
     renderWorkspace();
   });
 

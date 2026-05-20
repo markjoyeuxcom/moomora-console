@@ -1,5 +1,5 @@
 import { renderMarkdownHtml } from './markdownPreview.js';
-import { visibleTagsForFilter } from './libraryFilters.js';
+import { groupDocumentsByType, visibleTagsForFilter } from './libraryFilters.js';
 
 const DOCUMENT_TYPES = [
   { value: 'runbook', label: 'Runbook' },
@@ -168,15 +168,7 @@ function selectedDocument(documents, selectedDocumentId) {
   return documents.find(document => document.id === selectedDocumentId) || documents[0] || null;
 }
 
-function renderDocumentList(documents, activeDocumentId) {
-  if (!documents.length) {
-    return `
-      <div class="task-empty" role="status">
-        <strong>No Markdown documents</strong>
-        <span>Create or import Markdown to build your runbook and notes library.</span>
-      </div>`;
-  }
-
+function renderDocumentRows(documents, activeDocumentId) {
   return documents.map((document) => {
     const isSelected = document.id === activeDocumentId;
     return `
@@ -188,6 +180,24 @@ function renderDocumentList(documents, activeDocumentId) {
         <span class="document-tags">${renderTags(document.tags)}</span>
       </button>`;
   }).join('');
+}
+
+function renderDocumentList(documents, activeDocumentId, { groupByType = false } = {}) {
+  if (!documents.length) {
+    return `
+      <div class="task-empty" role="status">
+        <strong>No Markdown documents</strong>
+        <span>Create or import Markdown to build your runbook and notes library.</span>
+      </div>`;
+  }
+
+  if (groupByType) {
+    const groups = groupDocumentsByType(documents);
+    return groups.map(({ label, docs }) => `
+      <div class="document-group-header">${escapeHtml(label)} <span>${docs.length}</span></div>${renderDocumentRows(docs, activeDocumentId)}`).join('');
+  }
+
+  return renderDocumentRows(documents, activeDocumentId);
 }
 
 function renderModes(editorMode, modes = ['edit', 'preview', 'split']) {
@@ -336,6 +346,9 @@ export function renderLibraryHtml({
   isFocusMode = false,
   isLibraryTagsDrawerOpen = false,
   isLibraryDocOpen = false,
+  typeFilter = 'all',
+  sortBy = 'updated',
+  groupByType = false,
 } = {}) {
   const safeDocuments = Array.isArray(documents) ? documents : [];
   const document = selectedDocument(safeDocuments, selectedDocumentId);
@@ -357,7 +370,23 @@ export function renderLibraryHtml({
           ${renderTagFilters({ availableTags, activeTags, tagQuery, areTagsExpanded })}
           ${renderActiveFilters({ activeTags, activeSavedViewId, savedViews, documentCount: safeDocuments.length })}
         </div>
-        <div class="document-list">${renderDocumentList(safeDocuments, document?.id)}
+        <div class="library-controls">
+          <div class="modes library-type-filter" role="tablist" aria-label="Document type">
+            <button class="${typeFilter === 'all' ? 'on' : ''}" type="button" role="tab" data-library-type="all" aria-selected="${typeFilter === 'all'}">all</button>
+            <button class="${typeFilter === 'runbook' ? 'on' : ''}" type="button" role="tab" data-library-type="runbook" aria-selected="${typeFilter === 'runbook'}">runbook</button>
+            <button class="${typeFilter === 'note' ? 'on' : ''}" type="button" role="tab" data-library-type="note" aria-selected="${typeFilter === 'note'}">note</button>
+          </div>
+          <label class="library-sort-label">sort
+            <select class="library-sort" data-library-sort>
+              <option value="updated"${sortBy === 'updated' ? ' selected' : ''}>updated</option>
+              <option value="created"${sortBy === 'created' ? ' selected' : ''}>created</option>
+              <option value="title"${sortBy === 'title' ? ' selected' : ''}>title</option>
+              <option value="type"${sortBy === 'type' ? ' selected' : ''}>type</option>
+            </select>
+          </label>
+          <button class="bracket-button bracket-button--quiet library-group-toggle" type="button" data-action="toggle-library-group" aria-pressed="${groupByType}">group: ${groupByType ? 'type' : 'off'}</button>
+        </div>
+        <div class="document-list">${renderDocumentList(safeDocuments, document?.id, { groupByType })}
         </div>
       </aside>
       <div class="library-resizer" data-library-resizer role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize library browser"></div>
