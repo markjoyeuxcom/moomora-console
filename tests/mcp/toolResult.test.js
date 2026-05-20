@@ -43,6 +43,20 @@ test('withErrorHandling wraps unexpected errors', async () => {
   assert.match(res.content[0].text, /Unexpected error: weird/);
 });
 
+test('withErrorHandling tolerates a non-Error throw', async () => {
+  const wrapped = withErrorHandling(async () => { throw 'oops'; });
+  const res = await wrapped({});
+  assert.equal(res.isError, true);
+  assert.match(res.content[0].text, /Unexpected error: oops/);
+});
+
+test('withErrorHandling tolerates a null throw', async () => {
+  const wrapped = withErrorHandling(async () => { throw null; });
+  const res = await wrapped({});
+  assert.equal(res.isError, true);
+  assert.match(res.content[0].text, /Unexpected error: null/);
+});
+
 test('withErrorHandling passes through successful results', async () => {
   const wrapped = withErrorHandling(async ({ n }) => okResult({ n }));
   const res = await wrapped({ n: 7 });

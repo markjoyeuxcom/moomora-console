@@ -16,7 +16,7 @@ export function withErrorHandling(handler) {
       if (err instanceof MoomoraApiError || err instanceof MoomoraUnavailableError) {
         return errorResult(err.message);
       }
-      return errorResult(`Unexpected error: ${err.message}`);
+      return errorResult(`Unexpected error: ${err?.message ?? String(err)}`);
     }
   };
 }

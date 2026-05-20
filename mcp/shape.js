@@ -5,6 +5,7 @@ export function snippet(body, max = DEFAULT_SNIPPET) {
   return String(body ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 }
 
+// Lightweight ref: body and timestamps are intentionally omitted — use get_document for the full record.
 export function toDocumentRef(doc) {
   return {
     id: doc.id,

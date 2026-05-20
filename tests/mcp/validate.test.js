@@ -11,3 +11,7 @@ test('rejects malformed strings', () => {
   assert.equal(isValidUuid(''), false);
   assert.equal(isValidUuid(undefined), false);
 });
+
+test('rejects a UUID with an out-of-range version nibble', () => {
+  assert.equal(isValidUuid('11111111-1111-6111-8111-111111111111'), false);
+});
