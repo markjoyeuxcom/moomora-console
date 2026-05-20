@@ -1,0 +1,107 @@
+import { MoomoraApiError, MoomoraUnavailableError } from './errors.js';
+
+const DEFAULT_BASE_URL = 'http://127.0.0.1:3000';
+const DEFAULT_TIMEOUT_MS = 5000;
+
+export function createMoomoraClient({
+  baseUrl = process.env.MOOMORA_API_URL || DEFAULT_BASE_URL,
+  token = process.env.MOOMORA_API_TOKEN,
+  fetch = globalThis.fetch,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+} = {}) {
+  const root = String(baseUrl).replace(/\/+$/, '');
+
+  async function request(method, path, { query, body } = {}) {
+    const url = new URL(root + path);
+    if (query) {
+      for (const [key, value] of Object.entries(query)) {
+        if (value !== undefined && value !== null && value !== '') {
+          url.searchParams.set(key, String(value));
+        }
+      }
+    }
+
+    const headers = { 'content-type': 'application/json' };
+    if (token) headers.authorization = `Bearer ${token}`;
+
+    let response;
+    try {
+      response = await fetch(url.toString(), {
+        method,
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch (err) {
+      throw new MoomoraUnavailableError(
+        `Moomora API not reachable at ${root} — is the server running? (${err.message})`,
+      );
+    }
+
+    if (response.status === 204) return null;
+
+    const text = await response.text();
+    let payload = null;
+    if (text) {
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        payload = { message: text };
+      }
+    }
+
+    if (!response.ok) {
+      const message = (payload && payload.message) || `HTTP ${response.status}`;
+      throw new MoomoraApiError(response.status, message);
+    }
+    return payload;
+  }
+
+  async function patchOrNull(path, patch) {
+    try {
+      return await request('PATCH', path, { body: patch });
+    } catch (err) {
+      if (err instanceof MoomoraApiError && err.status === 404) return null;
+      throw err;
+    }
+  }
+
+  return {
+    listDocuments: ({ q, context, documentType } = {}) =>
+      request('GET', '/api/library/documents', { query: { q, context, documentType } }),
+
+    getDocument: async (id) => {
+      const docs = await request('GET', '/api/library/documents', {});
+      return (Array.isArray(docs) ? docs : []).find((doc) => doc.id === id) || null;
+    },
+
+    createDocument: (payload) =>
+      request('POST', '/api/library/documents', { body: payload }),
+
+    updateDocument: (id, patch) =>
+      patchOrNull(`/api/library/documents/${id}`, patch),
+
+    listTasks: ({ q, context, status } = {}) =>
+      request('GET', '/api/tasks', { query: { q, context, status } }),
+
+    getTask: async (id) => {
+      const tasks = await request('GET', '/api/tasks', {});
+      return (Array.isArray(tasks) ? tasks : []).find((task) => task.id === id) || null;
+    },
+
+    createTask: (payload) =>
+      request('POST', '/api/tasks', { body: payload }),
+
+    updateTask: (id, patch) =>
+      patchOrNull(`/api/tasks/${id}`, patch),
+
+    listTaskDocuments: (taskId) =>
+      request('GET', `/api/tasks/${taskId}/documents`, {}),
+
+    linkTaskDocument: (taskId, documentId) =>
+      request('POST', `/api/tasks/${taskId}/documents`, { body: { documentId } }),
+
+    unlinkTaskDocument: (taskId, documentId) =>
+      request('DELETE', `/api/tasks/${taskId}/documents/${documentId}`, {}),
+  };
+}
