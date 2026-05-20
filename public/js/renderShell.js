@@ -31,11 +31,6 @@ const viewButtons = [
   },
 ];
 
-const contextButtons = [
-  { id: 'personal', label: 'Personal' },
-  { id: 'work', label: 'Work' },
-  { id: 'homelab', label: 'Homelab' },
-];
 
 const metricCards = [
   { key: 'dueToday', label: 'Due today' },
@@ -79,7 +74,8 @@ function syncLabelFor(apiStatus) {
   return '<span class="sync-dots sync-dots--ok">●●●</span> ok';
 }
 
-function renderHamburgerDrawer({ activeContext, isDrawerOpen, apiStatus }) {
+function renderHamburgerDrawer({ activeProject, projects, isDrawerOpen, apiStatus }) {
+  const allActive = activeProject === 'all';
   return `
        <aside class="hamburger-drawer${isDrawerOpen ? ' is-open' : ''}" aria-label="Secondary navigation"${isDrawerOpen ? '' : ' aria-hidden="true" inert'}>
          <header class="hamburger-drawer__header">
@@ -91,8 +87,11 @@ function renderHamburgerDrawer({ activeContext, isDrawerOpen, apiStatus }) {
            <button class="hamburger-drawer__item" type="button" data-view="backlog">backlog</button>
          </div>
          <div class="hamburger-drawer__group">
-           <p class="hamburger-drawer__label">// CONTEXTS</p>
-           ${['personal', 'work', 'homelab'].map(c => `<button class="hamburger-drawer__item${c === activeContext ? ' is-active' : ''}" type="button" data-context="${c}">${escapeHtml(c)}</button>`).join('')}
+           <p class="hamburger-drawer__label">// PROJECTS</p>
+           <button class="hamburger-drawer__item${allActive ? ' is-active' : ''}" type="button" data-project="all">all projects</button>
+           ${projects.map(p => `<button class="hamburger-drawer__item${p.id === activeProject ? ' is-active' : ''}" type="button" data-project="${escapeHtml(p.id)}">${escapeHtml(p.name)}</button>`).join('')}
+           <button class="hamburger-drawer__item" type="button" data-action="new-project">[+] new project</button>
+           <button class="hamburger-drawer__item" type="button" data-action="open-project-manager">manage</button>
          </div>
          <div class="hamburger-drawer__group">
            <p class="hamburger-drawer__label">// ADMIN</p>
@@ -149,14 +148,23 @@ function renderViewButtons(activeView) {
   }).join('');
 }
 
-function renderContextButtons(activeContext) {
-  return contextButtons.map((context) => {
-    const isActive = activeContext === context.id;
+function renderProjectButtons(activeProject, projects) {
+  const allActive = activeProject === 'all';
+  const allBtn = `
+          <button class="nav-button${allActive ? ' is-active' : ''}" type="button" aria-pressed="${allActive}" data-project="all">
+            <span>All projects</span>
+          </button>`;
+  const projectBtns = projects.map((project) => {
+    const isActive = project.id === activeProject;
     return `
-          <button class="nav-button${isActive ? ' is-active' : ''}" type="button" aria-pressed="${isActive}" data-context="${context.id}">
-            <span>${context.label}</span>
+          <button class="nav-button${isActive ? ' is-active' : ''}" type="button" aria-pressed="${isActive}" data-project="${escapeHtml(project.id)}">
+            <span>${escapeHtml(project.name)}</span>
           </button>`;
   }).join('');
+  const actionBtns = `
+          <button class="nav-button" type="button" data-action="new-project"><span>[+] new project</span></button>
+          <button class="nav-button" type="button" data-action="open-project-manager"><span>manage</span></button>`;
+  return allBtn + projectBtns + actionBtns;
 }
 
 function renderMetricCards(metrics) {
@@ -174,7 +182,8 @@ function apiStatusLabel(apiStatus) {
 }
 
 export function renderShellHtml({
-  activeContext = 'homelab',
+  activeProject = 'all',
+  projects = [],
   activeView = 'list',
   apiStatus = 'connected',
   searchQuery = '',
@@ -192,7 +201,7 @@ export function renderShellHtml({
 
   return `
     <div class="app-shell">
-      ${renderHamburgerDrawer({ activeContext, isDrawerOpen, apiStatus })}
+      ${renderHamburgerDrawer({ activeProject, projects, isDrawerOpen, apiStatus })}
       <aside class="sidebar" aria-label="Moomora Console navigation">
         <div class="brand">
           <span class="brand-mark" aria-hidden="true">M</span>
@@ -203,8 +212,8 @@ export function renderShellHtml({
           <p class="nav-label">Views</p>${renderViewButtons(activeView)}
         </nav>
 
-        <nav class="side-nav" aria-label="Contexts">
-          <p class="nav-label">Contexts</p>${renderContextButtons(activeContext)}
+        <nav class="side-nav" aria-label="Projects">
+          <p class="nav-label">Projects</p>${renderProjectButtons(activeProject, projects)}
         </nav>
 
         <section class="cluster-card" aria-label="Cluster status">
@@ -254,7 +263,7 @@ export function renderShellHtml({
         ${metricsHtml}
         <div id="workspace" class="workspace${isLibraryView ? ' workspace--library' : ''}"></div>
         <footer class="status-footer" aria-label="Console status">
-          <span class="status-footer__breadcrumb">moomora <span class="status-footer__slash">/</span> ${escapeHtml(activeViewConfig.label)} <span class="status-footer__slash">/</span> <strong>${escapeHtml(activeContext)}</strong></span>
+          <span class="status-footer__breadcrumb">moomora <span class="status-footer__slash">/</span> ${escapeHtml(activeViewConfig.label)} <span class="status-footer__slash">/</span> <strong>${escapeHtml(activeProject === 'all' ? 'all projects' : (projects.find(p => p.id === activeProject)?.name || 'all projects'))}</strong></span>
           <span class="status-footer__sync">${syncLabelFor(apiStatus)}</span>
           <span class="status-footer__mode">&lt;${escapeHtml(modeTagFor(activeView))}&gt;</span>
         </footer>
