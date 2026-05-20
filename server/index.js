@@ -4,6 +4,7 @@ import { loadConfig } from './config.js';
 import { createDb } from './db.js';
 import { registerTasksRoutes } from './tasksRoutes.js';
 import { registerLibraryRoutes } from './libraryRoutes.js';
+import { registerProjectsRoutes } from './projectsRoutes.js';
 
 export async function buildApp(options = {}) {
   const config = options.config || loadConfig();
@@ -28,6 +29,7 @@ export async function buildApp(options = {}) {
   app.decorate('libraryRepository', options.libraryRepository || null);
   await registerTasksRoutes(app, options);
   await registerLibraryRoutes(app, options);
+  await registerProjectsRoutes(app, options);
 
   await app.register(fastifyStatic, {
     root: config.publicDir,
