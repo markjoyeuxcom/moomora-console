@@ -12,6 +12,18 @@ function stubFetch(captured, response = { ok: true, json: async () => ({}) }) {
   };
 }
 
+test('fetchProjects throws when the response is not ok', async () => {
+  const c = {};
+  stubFetch(c, { ok: false, json: async () => ({}) });
+  await assert.rejects(() => fetchProjects(), /Failed to load projects/);
+});
+
+test('createProject throws when the response is not ok', async () => {
+  const c = {};
+  stubFetch(c, { ok: false, json: async () => ({}) });
+  await assert.rejects(() => createProject('X'), /Failed to create project/);
+});
+
 test('fetchProjects requests /api/projects with optional status', async () => {
   const c = {};
   stubFetch(c, { ok: true, json: async () => [{ id: 'p1' }] });

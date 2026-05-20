@@ -54,17 +54,17 @@ export function setState(patch) {
 
 const ACTIVE_PROJECT_KEY = 'moomora.activeProject.v1';
 
-export function loadActiveProject() {
+export function loadActiveProject(storage = globalThis.localStorage) {
   try {
-    return window.localStorage.getItem(ACTIVE_PROJECT_KEY) || 'all';
+    return storage?.getItem?.(ACTIVE_PROJECT_KEY) ?? 'all';
   } catch {
     return 'all';
   }
 }
 
-export function persistActiveProject(value) {
+export function persistActiveProject(value, storage = globalThis.localStorage) {
   try {
-    window.localStorage.setItem(ACTIVE_PROJECT_KEY, value);
+    storage?.setItem?.(ACTIVE_PROJECT_KEY, value);
   } catch {
     /* ignore storage failures */
   }
