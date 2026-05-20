@@ -65,3 +65,16 @@ test('DELETE /permanent succeeds only when empty (409 otherwise)', async () => {
   const busy = await build({ async countProjectDependents() { return 3; } });
   assert.equal((await busy.inject({ method: 'DELETE', url: `/api/projects/${PROJECT_ID}/permanent` })).statusCode, 409);
 });
+
+test('DELETE /permanent returns 409 if a dependent FK blocks the delete', async () => {
+  const app = await build({
+    async countProjectDependents() { return 0; },
+    async deleteProject() {
+      const err = new Error('foreign key violation');
+      err.code = '23503';
+      throw err;
+    },
+  });
+  const res = await app.inject({ method: 'DELETE', url: `/api/projects/${PROJECT_ID}/permanent` });
+  assert.equal(res.statusCode, 409);
+});

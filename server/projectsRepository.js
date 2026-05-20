@@ -92,11 +92,21 @@ export function createProjectsRepository(db) {
       return result.rows.map(normalizeProjectRow);
     },
     async createProject({ name, status }) {
-      const existing = await db.query('select slug from projects');
-      const slug = deriveSlug(name, existing.rows.map((r) => r.slug));
-      const q = buildCreateProject({ name, slug, status });
-      const result = await db.query(q.text, q.values);
-      return normalizeProjectRow(result.rows[0]);
+      // Re-derive and retry on a slug unique-violation (23505) so a rare
+      // concurrent create surfaces gracefully instead of as a 500.
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const existing = await db.query('select slug from projects');
+        const slug = deriveSlug(name, existing.rows.map((r) => r.slug));
+        try {
+          const q = buildCreateProject({ name, slug, status });
+          const result = await db.query(q.text, q.values);
+          return normalizeProjectRow(result.rows[0]);
+        } catch (err) {
+          if (err && err.code === '23505' && attempt < 4) continue;
+          throw err;
+        }
+      }
+      throw new Error('Could not generate a unique project slug');
     },
     async updateProject(id, fields) {
       const q = buildUpdateProject(id, fields);

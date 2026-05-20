@@ -8,6 +8,7 @@ import {
   buildArchiveProject,
   buildCountProjectDependents,
   buildDeleteProject,
+  createProjectsRepository,
 } from '../../server/projectsRepository.js';
 
 test('normalizeProjectRow maps snake_case to camelCase', () => {
@@ -61,4 +62,29 @@ test('buildDeleteProject deletes by id', () => {
   const q = buildDeleteProject('p1');
   assert.match(q.text, /delete from projects/);
   assert.deepEqual(q.values, ['p1']);
+});
+
+test('createProject re-derives and retries on a slug unique-violation', async () => {
+  let inserts = 0;
+  const db = {
+    async query(text) {
+      if (/select slug from projects/.test(text)) return { rows: [{ slug: 'work' }] };
+      inserts += 1;
+      if (inserts === 1) {
+        const err = new Error('duplicate key');
+        err.code = '23505';
+        throw err;
+      }
+      return {
+        rows: [{
+          id: 'p9', name: 'Work', slug: 'work-2', status: 'active',
+          sort_order: 0, created_at: 'c', updated_at: 'u',
+        }],
+      };
+    },
+  };
+  const repo = createProjectsRepository(db);
+  const project = await repo.createProject({ name: 'Work' });
+  assert.equal(project.slug, 'work-2');
+  assert.equal(inserts, 2);
 });

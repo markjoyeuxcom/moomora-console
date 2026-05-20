@@ -99,7 +99,18 @@ export async function registerProjectsRoutes(app, options = {}) {
       reply.code(409);
       return { message: 'project still has tasks or documents' };
     }
-    const project = await repository.deleteProject(request.params.id);
+    let project;
+    try {
+      project = await repository.deleteProject(request.params.id);
+    } catch (err) {
+      // A dependent added between the count check and the delete trips the FK
+      // (23503); surface it as the same 409 rather than a 500.
+      if (err && err.code === '23503') {
+        reply.code(409);
+        return { message: 'project still has tasks or documents' };
+      }
+      throw err;
+    }
     if (!project) {
       reply.code(404);
       return { message: 'project not found' };

@@ -27,6 +27,7 @@ export async function buildApp(options = {}) {
 
   app.decorate('tasksRepository', options.tasksRepository || null);
   app.decorate('libraryRepository', options.libraryRepository || null);
+  app.decorate('projectsRepository', options.projectsRepository || null);
   await registerTasksRoutes(app, options);
   await registerLibraryRoutes(app, options);
   await registerProjectsRoutes(app, options);
