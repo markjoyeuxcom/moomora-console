@@ -81,6 +81,7 @@ test('board column header includes a collapse toggle', () => {
 test('board column with closed section uses closed glyph and hidden cards', () => {
   const tasks = [{ id: 'a', title: 'X', priority: 'low', status: 'planned', sortOrder: 0 }];
   const html = renderBoardHtml(tasks, null, { boardOpenSections: { planned: false } });
-  assert.match(html, /data-board-column="planned"[^>]*aria-expanded="false"/);
+  assert.doesNotMatch(html, /data-board-column="planned"[^>]*aria-expanded="false"/);
+  assert.match(html, /data-section="planned"[^>]*aria-expanded="false"/);
   assert.match(html, /data-section="planned"[\s\S]*?▸/);
 });

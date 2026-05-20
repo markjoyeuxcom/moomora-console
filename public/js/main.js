@@ -205,11 +205,12 @@ function applyMarkdownToolbarAction(textarea, action) {
 
 async function loadTaskDocuments(taskId) {
   if (!taskId) { setState({ taskDocuments: [] }); return; }
+  const requestedTaskId = taskId;
   try {
     const docs = await fetchTaskDocuments(taskId);
-    setState({ taskDocuments: docs });
+    if (state.selectedTaskId === requestedTaskId) setState({ taskDocuments: docs });
   } catch {
-    setState({ taskDocuments: [] });
+    if (state.selectedTaskId === requestedTaskId) setState({ taskDocuments: [] });
   }
 }
 
@@ -1712,7 +1713,7 @@ async function init() {
         }
       },
       escape() {
-        const closer = app.querySelector('[data-action="close-task-form"], [data-action="close-document-form"], [data-action="close-admin"], [data-action="close-settings"]');
+        const closer = app.querySelector('[data-action="close-task-form"], [data-action="close-document-form"], [data-action="close-admin"], [data-action="close-settings"], [data-action="close-link-picker"]');
         if (closer) { closer.click(); return; }
         if (state.isDrawerOpen) { app.querySelector('[data-action="toggle-drawer"]')?.click(); return; }
         if (state.mobileDetailOpen) { app.querySelector('[data-action="close-mobile-detail"]')?.click(); return; }

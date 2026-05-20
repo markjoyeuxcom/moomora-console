@@ -81,7 +81,7 @@ function syncLabelFor(apiStatus) {
 
 function renderHamburgerDrawer({ activeContext, isDrawerOpen, apiStatus }) {
   return `
-       <aside class="hamburger-drawer${isDrawerOpen ? ' is-open' : ''}" aria-label="Secondary navigation"${isDrawerOpen ? '' : ' aria-hidden="true"'}>
+       <aside class="hamburger-drawer${isDrawerOpen ? ' is-open' : ''}" aria-label="Secondary navigation"${isDrawerOpen ? '' : ' aria-hidden="true" inert'}>
          <header class="hamburger-drawer__header">
            <span class="hamburger-drawer__title">// MENU</span>
            <button class="hamburger-drawer__close" type="button" data-action="toggle-drawer" aria-label="Close menu">×</button>
@@ -233,8 +233,8 @@ export function renderShellHtml({
         <header class="topbar">
           <button class="hamburger-trigger" type="button" data-action="toggle-drawer" aria-label="Menu">≡</button>
           <label class="search-field">
-            <span class="sr-only">Search tasks</span>
-            <input type="search" placeholder="Search tasks" autocomplete="off" value="${escapeHtml(searchQuery)}" data-search-input>
+            <span class="sr-only">${isLibraryView ? 'Search documents' : 'Search tasks'}</span>
+            <input type="search" placeholder="${isLibraryView ? 'Search documents' : 'Search tasks'}" autocomplete="off" value="${escapeHtml(searchQuery)}" data-search-input>
           </label>
           <div class="topbar-actions">
             <button type="button" data-action="open-settings" class="bracket-button">[~] settings</button>

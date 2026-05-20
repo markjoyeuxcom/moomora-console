@@ -1189,6 +1189,27 @@ test('POST /api/tasks/:id/documents links a document and returns 201 with update
   await app.close();
 });
 
+test('POST /api/tasks/:id/documents returns 200 when link already exists (idempotent)', async () => {
+  const repository = createFakeRepository();
+  await repository.linkTaskDocument(TASK_ID, DOCUMENT_ID);
+  const app = await buildApp({
+    skipDb: true,
+    tasksRepository: repository,
+  });
+
+  const response = await app.inject({
+    method: 'POST',
+    url: `/api/tasks/${TASK_ID}/documents`,
+    payload: { documentId: DOCUMENT_ID },
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().length, 1);
+  assert.equal(response.json()[0].id, DOCUMENT_ID);
+
+  await app.close();
+});
+
 test('POST /api/tasks/:id/documents rejects malformed task id', async () => {
   const app = await buildApp({
     skipDb: true,

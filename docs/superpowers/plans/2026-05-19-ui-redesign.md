@@ -1939,7 +1939,7 @@ Resize to 360px. Confirm:
 
 Files in the working tree at end of Phase 3:
 
-```
+```text
 M  .gitignore
 M  public/index.html
 M  public/styles.css
@@ -1972,7 +1972,7 @@ M  tests/frontend/renderLibrary.test.js
 
 When the user is ready to commit, a clean sequence would be one commit per phase (3 commits) or one cohesive commit (1) — their call. Suggested commit messages if they want a single commit:
 
-```
+```text
 feat(ui): redesign frontend in operator-evolved direction
 
 - New operator palette (14 tokens), JetBrains Mono everywhere,

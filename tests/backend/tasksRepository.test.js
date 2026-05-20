@@ -300,13 +300,16 @@ test('buildUnlinkTaskDocument returns delete with both ids', () => {
   assert.deepEqual(query.values, [taskId, documentId]);
 });
 
-test('buildLinkExists returns select with both ids', () => {
+test('buildLinkExists returns select with both ids joining non-archived tasks and docs', () => {
   const taskId = '11111111-1111-4111-8111-111111111111';
   const documentId = '22222222-2222-4222-8222-222222222222';
   const query = buildLinkExists(taskId, documentId);
 
-  assert.match(query.text, /select 1 from task_documents/);
-  assert.match(query.text, /where task_id = \$1 and document_id = \$2/);
+  assert.match(query.text, /select 1/);
+  assert.match(query.text, /from task_documents td/);
+  assert.match(query.text, /join tasks t on t\.id = td\.task_id and t\.archived_at is null/);
+  assert.match(query.text, /join markdown_documents d on d\.id = td\.document_id and d\.archived_at is null/);
+  assert.match(query.text, /where td\.task_id = \$1 and td\.document_id = \$2/);
   assert.deepEqual(query.values, [taskId, documentId]);
 });
 

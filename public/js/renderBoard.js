@@ -47,15 +47,15 @@ export function renderBoardHtml(tasks = [], selectedTaskId = null, options = {})
         const cards = renderColumnCards(safe, col.id, selectedTaskId);
         const count = safe.filter(t => (t.status || t.column || 'planned') === col.id).length;
         return `
-        <section class="board-column board-column--${isOpen ? 'open' : 'closed'}" aria-label="${col.label}" data-board-column="${col.id}" aria-expanded="${isOpen}">
+        <section class="board-column board-column--${isOpen ? 'open' : 'closed'}" aria-label="${col.label}" data-board-column="${col.id}">
           <header class="board-column__header">
-            <button class="board-column__toggle" type="button" data-action="toggle-board-section" data-section="${col.id}" aria-label="Toggle ${col.label}">
+            <button class="board-column__toggle" type="button" data-action="toggle-board-section" data-section="${col.id}" aria-label="Toggle ${col.label}" aria-expanded="${isOpen}" aria-controls="board-cards-${col.id}">
               <span class="board-column__glyph">${isOpen ? '▾' : '▸'}</span>
-              <h2 class="board-column__title">[ ${col.label} ]</h2>
+              <span class="board-column__title">[ ${col.label} ]</span>
               <span class="board-column__count">${count}</span>
             </button>
           </header>
-          <div class="board-cards" data-board-column="${col.id}"${isOpen ? '' : ' hidden'}>${cards}
+          <div class="board-cards" id="board-cards-${col.id}" data-board-column="${col.id}"${isOpen ? '' : ' hidden'}>${cards}
           </div>
         </section>`;
       }).join('')}

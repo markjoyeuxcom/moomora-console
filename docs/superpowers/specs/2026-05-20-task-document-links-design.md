@@ -39,7 +39,7 @@ create index if not exists idx_task_documents_document on task_documents (docume
 ## API
 
 - `GET /api/tasks/:id/documents` → list the document summaries linked to a task (id, title, documentType, context).
-- `POST /api/tasks/:id/documents` `{ documentId }` → create a link. 201 on success, 404 if task or document missing, 409 if already linked (idempotent-friendly: treat duplicate as success).
+- `POST /api/tasks/:id/documents` `{ documentId }` → 201 when a new link is created, 200 if the link already exists (idempotent), 404 if the task or document is missing or archived.
 - `DELETE /api/tasks/:id/documents/:documentId` → remove a link. 204/200 on success, 404 if the link did not exist.
 
 Validation: both ids must be valid UUIDs; the task and document must exist and be non-archived.

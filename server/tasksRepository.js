@@ -186,7 +186,11 @@ export function buildUnlinkTaskDocument(taskId, documentId) {
 export function buildLinkExists(taskId, documentId) {
   return {
     text: `
-      select 1 from task_documents where task_id = $1 and document_id = $2
+      select 1
+      from task_documents td
+      join tasks t on t.id = td.task_id and t.archived_at is null
+      join markdown_documents d on d.id = td.document_id and d.archived_at is null
+      where td.task_id = $1 and td.document_id = $2
     `,
     values: [taskId, documentId],
   };

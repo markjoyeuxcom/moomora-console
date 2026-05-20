@@ -30,7 +30,7 @@ const operatorTheme = EditorView.theme({
   '.cm-activeLine': { backgroundColor: 'color-mix(in srgb, var(--accent) 4%, transparent)' },
   '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--caret)', borderLeftWidth: '2px' },
   '.cm-selectionBackground, .cm-content ::selection': { backgroundColor: 'color-mix(in srgb, var(--accent) 22%, transparent) !important' },
-  '.cm-focused': { outline: 'none' },
+  '&.cm-focused': { outline: 'none' },
 }, { dark: true });
 
 const operatorHighlight = HighlightStyle.define([

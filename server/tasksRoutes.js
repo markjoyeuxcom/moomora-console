@@ -338,7 +338,7 @@ export async function registerTasksRoutes(app, options = {}) {
       reply.code(404);
       return { message: 'task or document not found' };
     }
-    reply.code(201);
+    reply.code(result.alreadyLinked ? 200 : 201);
     return repository.listTaskDocuments(id);
   });
 

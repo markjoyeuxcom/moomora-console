@@ -178,7 +178,7 @@ Form fields inside never change. Only the chrome around them adapts.
 
 **Task card** replaces the current table row in Today/Backlog/Archive.
 
-```
+```text
 ┌─[3px stripe: priority color]──────────────────────────┐
 │ back up cnpg                              [ HIGH ]    │
 │ planned · due 2026-05-19 · verify backup schedule     │
@@ -299,7 +299,7 @@ Most complex view. See Layout Architecture above for breakpoint handling.
 
 ## Data and State
 
-No backend changes. Frontend state additions to [public/js/state.js](public/js/state.js):
+No backend changes. Frontend state additions to [public/js/state.js](../../../public/js/state.js):
 
 | Field | Type | Purpose |
 |---|---|---|
