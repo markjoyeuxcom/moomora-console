@@ -3179,3 +3179,4 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
 .project-row__name { flex: 1 1 160px; min-width: 120px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--text-body); padding: 6px 8px; }
 .project-row__status { background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--text-body); padding: 6px 8px; }
 .project-row__actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.project-manager__empty { color: var(--text-dimmer); font-size: 0.85rem; padding: 6px 2px; list-style: none; }

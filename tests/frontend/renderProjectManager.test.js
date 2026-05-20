@@ -50,7 +50,14 @@ test('shows an error banner when error is provided', () => {
   assert.match(html, /Could not delete/);
 });
 
-test('renders an empty list without throwing', () => {
+test('renders an empty list with a hint', () => {
   const html = renderProjectManagerHtml({ projects: [] });
   assert.match(html, /project-manager__list/);
+  assert.match(html, /project-manager__empty/);
+});
+
+test('defaults the status select to the first option for an unrecognised status', () => {
+  const html = renderProjectManagerHtml({ projects: [{ id: 'p1', name: 'X', slug: 'x', status: 'legacy-value', sortOrder: 0 }] });
+  assert.match(html, /<option value="active" selected>/);
+  assert.doesNotMatch(html, /<option value="legacy-value"/);
 });

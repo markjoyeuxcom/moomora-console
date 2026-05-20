@@ -16,9 +16,14 @@ function escapeHtml(value) {
 
 function renderStatusSelect(project) {
   const id = escapeHtml(project.id);
+  // Fall back to the first option for a missing/unrecognised status so the
+  // rendered selection always matches what a save would submit.
+  const selected = STATUS_OPTIONS.some(option => option.value === project.status)
+    ? project.status
+    : STATUS_OPTIONS[0].value;
   return `<select class="project-row__status" data-project-status="${id}" aria-label="Status">${
     STATUS_OPTIONS.map(option =>
-      `<option value="${option.value}"${option.value === project.status ? ' selected' : ''}>${option.label}</option>`,
+      `<option value="${option.value}"${option.value === selected ? ' selected' : ''}>${option.label}</option>`,
     ).join('')
   }</select>`;
 }
@@ -64,7 +69,9 @@ export function renderProjectManagerHtml({ projects = [], error = '' } = {}) {
             <button class="bracket-button bracket-button--primary" type="button" data-action="manager-create">[+] add</button>
           </div>
           <ul class="project-manager__list">
-            ${projects.map(renderProjectRow).join('')}
+            ${projects.length
+              ? projects.map(renderProjectRow).join('')
+              : '<li class="project-manager__empty">No projects yet — add one above.</li>'}
           </ul>
         </div>
       </section>
