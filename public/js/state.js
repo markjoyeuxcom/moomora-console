@@ -6,7 +6,8 @@ export const state = {
   selectedTaskId: null,
   selectedDocumentId: null,
   activeView: 'list',
-  activeContext: 'homelab',
+  activeProject: 'all',   // 'all' or a project id
+  projects: [],           // active projects loaded from /api/projects
   searchQuery: '',
   apiStatus: 'unknown',
   isTaskFormOpen: false,
@@ -49,4 +50,22 @@ export const state = {
 
 export function setState(patch) {
   Object.assign(state, patch);
+}
+
+const ACTIVE_PROJECT_KEY = 'moomora.activeProject.v1';
+
+export function loadActiveProject() {
+  try {
+    return window.localStorage.getItem(ACTIVE_PROJECT_KEY) || 'all';
+  } catch {
+    return 'all';
+  }
+}
+
+export function persistActiveProject(value) {
+  try {
+    window.localStorage.setItem(ACTIVE_PROJECT_KEY, value);
+  } catch {
+    /* ignore storage failures */
+  }
 }
