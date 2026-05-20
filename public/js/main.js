@@ -1534,6 +1534,9 @@ function bindAdminPanelEvents() {
 async function refreshProjectManager() {
   const managed = await fetchProjects('all');
   await loadProjects();
+  // The nav only shows active projects, so if the selected project is no
+  // longer active (archived, on-hold, completed, or deleted) it can't be the
+  // highlighted selection — reset to 'all' to keep nav and breadcrumb honest.
   if (state.activeProject !== 'all' && !state.projects.some((p) => p.id === state.activeProject)) {
     setState({ activeProject: 'all' });
     persistActiveProject('all');
@@ -1546,20 +1549,26 @@ function bindProjectManagerEvents() {
   const panel = app.querySelector('[data-project-manager]');
   if (!panel) return;
 
-  panel.querySelector('[data-action="close-project-manager"]')?.addEventListener('click', async () => {
-    setState({ isProjectManagerOpen: false, projectManagerError: '' });
-    try {
-      if (state.activeView === 'library') await loadDocuments({ selectedDocumentId: null });
-      else await loadTasks({ selectedTaskId: null });
-    } catch (error) {
-      setState({ apiStatus: 'error' });
-      renderError(error.message);
-    }
+  panel.querySelectorAll('[data-action="close-project-manager"]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      setState({ isProjectManagerOpen: false, projectManagerError: '' });
+      try {
+        if (state.activeView === 'library') await loadDocuments({ selectedDocumentId: null });
+        else await loadTasks({ selectedTaskId: null });
+      } catch (error) {
+        setState({ apiStatus: 'error' });
+        renderError(error.message);
+      }
+    });
   });
 
   panel.querySelector('[data-action="manager-create"]')?.addEventListener('click', async () => {
     const name = panel.querySelector('[data-project-new-name]')?.value?.trim();
-    if (!name) return;
+    if (!name) {
+      setState({ projectManagerError: 'Project name is required.' });
+      renderApp();
+      return;
+    }
     try {
       await createProject(name);
       await refreshProjectManager();
@@ -1884,7 +1893,7 @@ async function init() {
         }
       },
       escape() {
-        const closer = app.querySelector('[data-action="close-task-form"], [data-action="close-document-form"], [data-action="close-admin"], [data-action="close-settings"], [data-action="close-link-picker"]');
+        const closer = app.querySelector('[data-action="close-task-form"], [data-action="close-document-form"], [data-action="close-admin"], [data-action="close-settings"], [data-action="close-link-picker"], [data-action="close-project-manager"]');
         if (closer) { closer.click(); return; }
         if (state.isDrawerOpen) { app.querySelector('[data-action="toggle-drawer"]')?.click(); return; }
         if (state.mobileDetailOpen) { app.querySelector('[data-action="close-mobile-detail"]')?.click(); return; }
