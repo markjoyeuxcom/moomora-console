@@ -2621,24 +2621,30 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
 
 /* modes segmented control */
 .modes {
-  display: inline-grid;
+  display: inline-flex;
+  flex-wrap: wrap;
   background: var(--bg-deep);
   border: 1px solid var(--border-dim);
 }
 
-.modes span {
+.modes > span,
+.modes > button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 5px 12px;
+  border: 0;
+  border-right: 1px dotted var(--border-dim);
+  background: transparent;
   color: var(--text-dim);
+  font: inherit;
   font-size: 0.8571rem;
   letter-spacing: 0.04em;
-  border-right: 1px dotted var(--border-dim);
   cursor: pointer;
 }
 
-.modes span:last-child { border-right: 0; }
+.modes > span:last-child,
+.modes > button:last-child { border-right: 0; }
 
 .modes .on {
   color: var(--accent);
