@@ -1212,12 +1212,42 @@ function bindShellEvents() {
     button.addEventListener('click', async () => {
       const nextProject = button.dataset.project;
       if (!nextProject || nextProject === state.activeProject) return;
-      setState({ activeProject: nextProject, selectedTaskId: null, selectedDocumentId: null, mobileDetailOpen: false });
+      clearDocumentAutosave();
+      setState({
+        activeProject: nextProject,
+        selectedTaskId: null,
+        selectedDocumentId: null,
+        activeLibraryTags: [],
+        libraryTagQuery: '',
+        areLibraryTagsExpanded: false,
+        documentDraftId: null,
+        documentDraftBody: '',
+        isDocumentDirty: false,
+        documentSaveStatus: 'Saved',
+        isDocumentFocusMode: false,
+        isTaskFormOpen: false,
+        isAdminPanelOpen: false,
+        isDocumentFormOpen: false,
+        isDocumentInfoEditorOpen: false,
+        editingTaskId: null,
+        editingDocumentId: null,
+        formError: '',
+        documentInfoError: '',
+        isDrawerOpen: false,
+        mobileDetailOpen: false,
+        isLibraryDocOpen: false,
+        isLinkPickerOpen: false,
+      });
       persistActiveProject(nextProject);
-      if (state.activeView === 'library') {
-        await loadDocuments({ selectedDocumentId: null });
-      } else {
-        await loadTasks({ selectedTaskId: null });
+      try {
+        if (state.activeView === 'library') {
+          await loadDocuments({ selectedDocumentId: null });
+        } else {
+          await loadTasks({ selectedTaskId: null });
+        }
+      } catch (error) {
+        setState({ apiStatus: 'error' });
+        renderError(error.message);
       }
     });
   });
@@ -1226,12 +1256,16 @@ function bindShellEvents() {
     button.addEventListener('click', async () => {
       const name = window.prompt('New project name');
       if (!name || !name.trim()) return;
-      const project = await createProject(name.trim());
-      await loadProjects();
-      setState({ activeProject: project.id });
-      persistActiveProject(project.id);
-      if (state.activeView === 'library') await loadDocuments({ selectedDocumentId: null });
-      else await loadTasks({ selectedTaskId: null });
+      try {
+        const project = await createProject(name.trim());
+        await loadProjects();
+        setState({ activeProject: project.id });
+        persistActiveProject(project.id);
+        if (state.activeView === 'library') await loadDocuments({ selectedDocumentId: null });
+        else await loadTasks({ selectedTaskId: null });
+      } catch {
+        window.alert('Moomora Console could not create that project.');
+      }
     });
   });
 
@@ -1387,10 +1421,16 @@ async function importAdminFile(file, panel) {
     return;
   }
 
+  const importTarget = state.activeProject === 'all' ? state.projects[0]?.id : state.activeProject;
+  if (!importTarget) {
+    window.alert('Create a project before importing tasks.');
+    return;
+  }
+
   try {
     const payload = JSON.parse(await file.text());
     const tasks = tasksFromImportPayload(payload);
-    const result = await importTasks({ project: state.activeProject === 'all' ? (state.projects[0]?.id) : state.activeProject, mode, tasks });
+    const result = await importTasks({ project: importTarget, mode, tasks });
     const skipped = result.skipped ? ` Skipped ${result.skipped}.` : '';
     window.alert(`Imported ${result.imported} ${result.imported === 1 ? 'task' : 'tasks'}.${skipped}`);
     setState({ isAdminPanelOpen: false });
@@ -1401,13 +1441,18 @@ async function importAdminFile(file, panel) {
 }
 
 async function importLibraryMarkdownFile(file) {
+  const projectId = defaultProjectId();
+  if (!projectId) {
+    window.alert('Create a project before importing documents.');
+    return;
+  }
   try {
     const body = await file.text();
     const doc = await createDocument({
       title: titleFromMarkdown(body, file.name),
       body,
       documentType: 'note',
-      project: defaultProjectId(),
+      project: projectId,
       tags: [],
       sourceFilename: file.name || null,
     });
