@@ -59,6 +59,7 @@ test('renderLibraryHtml renders document list and preview detail', () => {
   assert.match(html, /Postgres Backup/);
   assert.match(html, /data-library-active-filter="backup"/);
   assert.match(html, /2 documents shown/);
+  assert.match(html, /class="library-resizer"[^>]*data-library-resizer[^>]*role="separator"/);
   assert.match(html, /class="library-workspace"/);
   assert.match(html, /class="library-browser"/);
   assert.match(html, /class="library-document-stage"/);
@@ -102,7 +103,7 @@ test('renderLibraryHtml renders inline document metadata editor', () => {
   assert.match(html, /name="sourceFilename"/);
   assert.match(html, /value="restore.md"/);
   assert.match(html, /data-action="cancel-document-info"/);
-  assert.match(html, /Saving\.\.\./);
+  assert.match(html, /\[s\] saving\.\.\./);
   assert.doesNotMatch(html, /data-document-editor/);
 });
 
@@ -159,7 +160,34 @@ test('renderLibraryHtml can render focused writing mode', () => {
   assert.match(html, /library-workspace is-focus-mode/);
   assert.match(html, /library-detail is-focus-mode/);
   assert.match(html, /document-workspace document-workspace--edit document-workspace--focused/);
-  assert.match(html, /aria-pressed="true">Focus/);
+  assert.match(html, /aria-pressed="true">\[f\] focus/);
+});
+
+test('library renders a segmented mode toggle with active state', () => {
+  const docs = [{ id: 'a', title: 'Doc', body: '', documentType: 'note', context: 'homelab', tags: [], sourceFilename: null }];
+  const html = renderLibraryHtml({
+    documents: docs, selectedDocumentId: 'a',
+    editorMode: 'split', draftBody: '', isDirty: false,
+    availableTags: [], activeTags: [], tagQuery: '',
+    areTagsExpanded: false, savedViews: [], activeSavedViewId: null,
+    isInfoEditing: false, infoError: '', isSaving: false,
+    saveStatus: 'Saved', isFocusMode: false,
+  });
+  assert.match(html, /class="modes"/);
+  assert.match(html, /class="on"[^>]*data-library-mode="split"/);
+});
+
+test('library actions use bracket buttons', () => {
+  const docs = [{ id: 'a', title: 'Doc', body: '', documentType: 'note', context: 'homelab', tags: [], sourceFilename: null }];
+  const html = renderLibraryHtml({
+    documents: docs, selectedDocumentId: 'a', editorMode: 'preview',
+    draftBody: '', isDirty: false, availableTags: [], activeTags: [],
+    tagQuery: '', areTagsExpanded: false, savedViews: [],
+    activeSavedViewId: null, isInfoEditing: false, infoError: '',
+    isSaving: false, saveStatus: 'Saved', isFocusMode: false,
+  });
+  assert.match(html, /data-action="archive-document"[^>]*>\[d\] archive/);
+  assert.match(html, /data-action="edit-document-info"[^>]*>\[i\] info/);
 });
 
 test('renderLibraryHtml renders split mode with editor and escaped preview', () => {
@@ -212,6 +240,30 @@ test('renderLibraryHtml uses Moomora Console as the fallback document source lab
   assert.match(html, /Created in Moomora Console/);
 });
 
+test('library renders a tags drawer toggle in the docs header', () => {
+  const html = renderLibraryHtml({
+    documents: [], selectedDocumentId: null, editorMode: 'preview',
+    draftBody: '', isDirty: false,
+    availableTags: [{ tag: 'ingress', count: 1 }], activeTags: [], tagQuery: '',
+    areTagsExpanded: false, savedViews: [], activeSavedViewId: null,
+    isInfoEditing: false, infoError: '', isSaving: false,
+    saveStatus: 'Saved', isFocusMode: false, isLibraryTagsDrawerOpen: false,
+  });
+  assert.match(html, /data-action="toggle-library-tags-drawer"[^>]*aria-expanded="false"/);
+});
+
+test('library tags drawer is open when isLibraryTagsDrawerOpen is true', () => {
+  const html = renderLibraryHtml({
+    documents: [], selectedDocumentId: null, editorMode: 'preview',
+    draftBody: '', isDirty: false,
+    availableTags: [{ tag: 'ingress', count: 1 }], activeTags: [], tagQuery: '',
+    areTagsExpanded: false, savedViews: [], activeSavedViewId: null,
+    isInfoEditing: false, infoError: '', isSaving: false,
+    saveStatus: 'Saved', isFocusMode: false, isLibraryTagsDrawerOpen: true,
+  });
+  assert.match(html, /class="library-tag-filter__drawer is-open"/);
+});
+
 test('renderDocumentFormHtml renders create and edit fields', () => {
   const html = renderDocumentFormHtml({
     activeContext: 'homelab',
@@ -219,7 +271,7 @@ test('renderDocumentFormHtml renders create and edit fields', () => {
     error: 'Title is required.',
   });
 
-  assert.match(html, /Edit Document/);
+  assert.match(html, /edit document/);
   assert.match(html, /Title is required/);
   assert.match(html, /name="title"/);
   assert.match(html, /name="body"/);
@@ -227,4 +279,11 @@ test('renderDocumentFormHtml renders create and edit fields', () => {
   assert.match(html, /value="runbook" selected/);
   assert.match(html, /name="tags"/);
   assert.match(html, /postgres, backup/);
+});
+
+test('document form renders both desktop and mobile modal headers', () => {
+  const html = renderDocumentFormHtml({ document: null, activeContext: 'homelab', error: '', isSaving: false });
+  assert.match(html, /class="modal-header--desktop"/);
+  assert.match(html, /class="modal-header--mobile"/);
+  assert.match(html, /<button[^>]*type="submit"[^>]*form="document-form"[^>]*>\[s\] save/);
 });

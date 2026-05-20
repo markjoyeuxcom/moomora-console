@@ -15,18 +15,25 @@ function labelFromValue(value) {
     .join(' ');
 }
 
+function priorityClass(priority) {
+  const p = String(priority || 'medium').toLowerCase();
+  if (p === 'high') return 'hi';
+  if (p === 'low') return 'lo';
+  return 'md';
+}
+
 function priorityLabel(priority) {
-  const normalized = String(priority || 'medium').toLowerCase();
-  if (normalized === 'high') return 'High';
-  if (normalized === 'low') return 'Low';
-  return 'Medium';
+  const p = String(priority || 'medium').toLowerCase();
+  if (p === 'high') return 'HIGH';
+  if (p === 'low') return 'LOW';
+  return 'MED';
 }
 
 function renderMetaItem(label, value) {
   return `
         <div>
           <dt>${label}</dt>
-          <dd>${escapeHtml(value)}</dd>
+          <dd>${value}</dd>
         </div>`;
 }
 
@@ -36,6 +43,25 @@ function renderDetailBlock(title, text) {
         <h3>${title}</h3>
         <p>${text}</p>
       </section>`;
+}
+
+function actionsFor(options) {
+  const readOnly = Boolean(options.readOnly);
+  const restoreAction = Boolean(options.restoreAction);
+  const deleteAction = Boolean(options.deleteAction);
+  if (restoreAction) {
+    return `
+        <div class="detail-actions">
+          <button class="bracket-button bracket-button--quiet" type="button" data-action="restore-task">[r] restore</button>
+          ${deleteAction ? '<button class="bracket-button bracket-button--danger" type="button" data-action="delete-archived-task">[!] delete</button>' : ''}
+        </div>`;
+  }
+  if (readOnly) return '';
+  return `
+        <div class="detail-actions">
+          <button class="bracket-button" type="button" data-action="edit-task">[e] edit</button>
+          <button class="bracket-button bracket-button--danger" type="button" data-action="archive-task">[d] archive</button>
+        </div>`;
 }
 
 export function renderTaskDetailHtml(task, options = {}) {
@@ -51,31 +77,24 @@ export function renderTaskDetailHtml(task, options = {}) {
 
   const title = task.title || 'Untitled task';
   const description = task.description || 'No description';
-  const priority = priorityLabel(task.priority);
+  const pClass = priorityClass(task.priority);
+  const pLabel = priorityLabel(task.priority);
   const status = labelFromValue(task.status || 'planned') || 'Planned';
   const dueDate = task.dueDate || '-';
-  const readOnly = Boolean(options.readOnly);
-  const restoreAction = Boolean(options.restoreAction);
-  const deleteAction = Boolean(options.deleteAction);
+
+  const priorityBadge = `<span class="bracket-badge bracket-badge--${pClass}">[ ${pLabel} ]</span>`;
 
   return `
     <aside class="detail-panel" aria-labelledby="selected-task-title">
       <header class="detail-header">
+        ${options.mobileDetailOpen ? `<button class="detail-back bracket-button bracket-button--quiet" type="button" data-action="close-mobile-detail" aria-label="Back">← back</button>` : ''}
         <span class="detail-kicker">Selected Task</span>
         <h2 id="selected-task-title">${escapeHtml(title)}</h2>
         <p>${escapeHtml(description)}</p>
-        ${restoreAction ? `
-        <div class="detail-actions">
-          <button class="secondary-action" type="button" data-action="restore-task">Restore</button>
-          ${deleteAction ? '<button class="danger-action" type="button" data-action="delete-archived-task">Delete</button>' : ''}
-        </div>` : readOnly ? '' : `
-        <div class="detail-actions">
-          <button class="secondary-action" type="button" data-action="edit-task">Edit</button>
-          <button class="danger-action" type="button" data-action="archive-task">Archive</button>
-        </div>`}
+        ${actionsFor(options)}
       </header>
 
-      <dl class="detail-meta" aria-label="Task metadata">${renderMetaItem('Priority', priority)}${renderMetaItem('Status', status)}${renderMetaItem('Due', dueDate)}
+      <dl class="detail-meta" aria-label="Task metadata">${renderMetaItem('Priority', priorityBadge)}${renderMetaItem('Status', escapeHtml(status))}${renderMetaItem('Due', escapeHtml(dueDate))}
       </dl>
 
       <div class="detail-body">${renderDetailBlock('Checklist', 'Checklist items will be tracked here as execution details are added.')}${renderDetailBlock('Notes', 'Operational notes and handoff context will appear here.')}${renderDetailBlock('Activity', 'Task history will show recent changes when activity tracking is enabled.')}

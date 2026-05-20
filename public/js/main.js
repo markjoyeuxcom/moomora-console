@@ -42,6 +42,7 @@ import { updateDocumentLivePreview } from './documentLivePreview.js';
 import { mountCodeMirrorEditor } from '../vendor/codemirror-editor.js';
 import { filterDocumentsByTags, tagsForDocuments } from './libraryFilters.js';
 import { applyPreferences, loadPreferences, resetPreferences, savePreferences } from './preferences.js';
+import { isMobile } from './breakpoints.js';
 import {
   areSameTags,
   createSavedLibraryView,
@@ -51,6 +52,7 @@ import {
 
 const app = document.getElementById('app');
 const SAVED_LIBRARY_VIEWS_KEY = 'moomora.librarySavedViews.v1';
+const LIBRARY_BROWSER_WIDTH_KEY = 'moomora.libraryBrowserWidth.v1';
 const DOCUMENT_AUTOSAVE_DELAY_MS = 1200;
 let documentAutosaveTimer = null;
 let isSavingDocumentDraft = false;
@@ -182,12 +184,24 @@ function renderWorkspace() {
 
   workspace.innerHTML = [
     renderWorkspacePrimary(visibleTasks, selectedTaskId),
-    renderTaskDetailHtml(task, { readOnly, restoreAction: readOnly, deleteAction: readOnly }),
+    renderTaskDetailHtml(task, { readOnly, restoreAction: readOnly, deleteAction: readOnly, mobileDetailOpen: state.mobileDetailOpen }),
   ].join('');
+
+  workspace.classList.toggle('is-mobile-detail-open', Boolean(state.mobileDetailOpen));
 
   workspace.querySelectorAll('[data-task-id]').forEach((row) => {
     row.addEventListener('click', () => {
-      setState({ selectedTaskId: row.dataset.taskId });
+      setState({
+        selectedTaskId: row.dataset.taskId,
+        mobileDetailOpen: isMobile() ? true : state.mobileDetailOpen,
+      });
+      renderWorkspace();
+    });
+  });
+
+  workspace.querySelectorAll('[data-action="close-mobile-detail"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setState({ mobileDetailOpen: false });
       renderWorkspace();
     });
   });
@@ -253,6 +267,79 @@ function renderWorkspace() {
   });
 }
 
+function setupLibraryResizer(workspace, libraryWorkspaceElement) {
+  const resizer = workspace.querySelector('[data-library-resizer]');
+  const browser = workspace.querySelector('.library-browser');
+  if (!resizer || !browser) return;
+
+  const MIN_WIDTH = 220;
+  const MAX_WIDTH = 560;
+
+  const applyWidth = (width) => {
+    const clamped = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, width));
+    libraryWorkspaceElement.style.setProperty('--library-browser-width', `${clamped}px`);
+    return clamped;
+  };
+
+  let savedWidth = null;
+  try {
+    savedWidth = window.localStorage?.getItem(LIBRARY_BROWSER_WIDTH_KEY);
+  } catch {
+    savedWidth = null;
+  }
+  if (savedWidth) applyWidth(parseInt(savedWidth, 10) || MIN_WIDTH);
+
+  const startDrag = (event) => {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = browser.getBoundingClientRect().width;
+    resizer.classList.add('is-dragging');
+    resizer.setPointerCapture?.(event.pointerId);
+
+    const onMove = (moveEvent) => {
+      applyWidth(startWidth + (moveEvent.clientX - startX));
+    };
+    const onEnd = () => {
+      resizer.classList.remove('is-dragging');
+      resizer.releasePointerCapture?.(event.pointerId);
+      resizer.removeEventListener('pointermove', onMove);
+      resizer.removeEventListener('pointerup', onEnd);
+      resizer.removeEventListener('pointercancel', onEnd);
+      try {
+        const current = libraryWorkspaceElement.style.getPropertyValue('--library-browser-width');
+        if (current) window.localStorage?.setItem(LIBRARY_BROWSER_WIDTH_KEY, current.trim());
+      } catch {
+        // persistence is a convenience; resize still works without it
+      }
+    };
+
+    resizer.addEventListener('pointermove', onMove);
+    resizer.addEventListener('pointerup', onEnd);
+    resizer.addEventListener('pointercancel', onEnd);
+  };
+
+  resizer.addEventListener('pointerdown', startDrag);
+
+  resizer.addEventListener('keydown', (event) => {
+    const step = event.shiftKey ? 32 : 16;
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      applyWidth(browser.getBoundingClientRect().width - step);
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      applyWidth(browser.getBoundingClientRect().width + step);
+    } else {
+      return;
+    }
+    try {
+      const current = libraryWorkspaceElement.style.getPropertyValue('--library-browser-width');
+      if (current) window.localStorage?.setItem(LIBRARY_BROWSER_WIDTH_KEY, current.trim());
+    } catch {
+      // ignore
+    }
+  });
+}
+
 function renderLibraryWorkspace(workspace) {
   const contextDocuments = state.documents.filter(document => document.context === state.activeContext);
   const visibleDocuments = visibleDocumentsForCurrentView();
@@ -274,6 +361,24 @@ function renderLibraryWorkspace(workspace) {
     isSaving: state.isSaving,
     saveStatus: state.documentSaveStatus,
     isFocusMode: state.isDocumentFocusMode,
+    isLibraryTagsDrawerOpen: state.isLibraryTagsDrawerOpen,
+    isLibraryDocOpen: state.isLibraryDocOpen,
+  });
+
+  const libraryWorkspaceElement = workspace.querySelector('.library-workspace');
+  if (libraryWorkspaceElement) {
+    libraryWorkspaceElement.classList.toggle('is-library-doc-open', Boolean(state.isLibraryDocOpen));
+    setupLibraryResizer(workspace, libraryWorkspaceElement);
+  }
+
+  workspace.querySelector('[data-action="toggle-library-tags-drawer"]')?.addEventListener('click', () => {
+    setState({ isLibraryTagsDrawerOpen: !state.isLibraryTagsDrawerOpen });
+    renderWorkspace();
+  });
+
+  workspace.querySelector('[data-action="close-library-doc"]')?.addEventListener('click', () => {
+    setState({ isLibraryDocOpen: false });
+    renderWorkspace();
   });
 
   function resetDocumentDraft() {
@@ -534,6 +639,7 @@ function renderLibraryWorkspace(workspace) {
         isDocumentFocusMode: false,
         isDocumentInfoEditorOpen: false,
         documentInfoError: '',
+        isLibraryDocOpen: isMobile() ? true : state.isLibraryDocOpen,
       });
       renderWorkspace();
     });
@@ -690,6 +796,16 @@ function renderLibraryWorkspace(workspace) {
   });
 }
 
+function openTouchMoveMenu(taskId, _anchorElement) {
+  const STATUSES = ['high-priority', 'in-progress', 'planned', 'completed', 'notes'];
+  const choice = window.prompt(`move to which column?\n${STATUSES.map((s, i) => `${i + 1}. ${s}`).join('\n')}`);
+  if (!choice) return;
+  const idx = Number(choice) - 1;
+  if (!Number.isInteger(idx) || idx < 0 || idx >= STATUSES.length) return;
+  const targetStatus = STATUSES[idx];
+  handleBoardDrop({ taskId, targetStatus, beforeTaskId: null });
+}
+
 function bindBoardEvents(workspace) {
   if (state.activeView !== 'board') return;
 
@@ -710,6 +826,35 @@ function bindBoardEvents(workspace) {
         target.classList.remove('is-drop-target');
       });
     });
+  });
+
+  const LONG_PRESS_MS = 480;
+
+  workspace.querySelectorAll('[data-board-card]').forEach((card) => {
+    let pressTimer = null;
+    let pressed = false;
+
+    const cancelPress = () => {
+      pressed = false;
+      if (pressTimer) {
+        window.clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    };
+
+    card.addEventListener('pointerdown', (event) => {
+      if (event.pointerType !== 'touch') return;
+      pressed = true;
+      pressTimer = window.setTimeout(() => {
+        if (!pressed) return;
+        cancelPress();
+        openTouchMoveMenu(card.dataset.taskId, card);
+      }, LONG_PRESS_MS);
+    });
+
+    card.addEventListener('pointerup', cancelPress);
+    card.addEventListener('pointercancel', cancelPress);
+    card.addEventListener('pointerleave', cancelPress);
   });
 
   workspace.querySelectorAll('.board-cards[data-board-column]').forEach((column) => {
@@ -735,6 +880,18 @@ function bindBoardEvents(workspace) {
         targetStatus: column.dataset.boardColumn,
         beforeTaskId: targetCard?.dataset.taskId === taskId ? null : targetCard?.dataset.taskId,
       });
+    });
+  });
+
+  workspace.querySelectorAll('[data-action="toggle-board-section"]').forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      const section = btn.dataset.section;
+      if (!section) return;
+      setState({
+        boardOpenSections: { ...state.boardOpenSections, [section]: state.boardOpenSections[section] === false },
+      });
+      renderWorkspace();
     });
   });
 }
@@ -796,7 +953,7 @@ function listOptionsForView(activeView) {
 
 function renderWorkspacePrimary(visibleTasks, selectedTaskId) {
   if (state.activeView === 'board') {
-    return renderBoardHtml(visibleTasks, selectedTaskId);
+    return renderBoardHtml(visibleTasks, selectedTaskId, { boardOpenSections: state.boardOpenSections });
   }
 
   return renderListHtml(visibleTasks, selectedTaskId, listOptionsForView(state.activeView));
@@ -810,6 +967,7 @@ function renderApp() {
     apiStatus: state.apiStatus,
     searchQuery: state.searchQuery,
     metrics,
+    isDrawerOpen: state.isDrawerOpen,
   });
   renderWorkspace();
   if (state.isTaskFormOpen) {
@@ -849,46 +1007,65 @@ function renderApp() {
 }
 
 function bindShellEvents() {
-  app.querySelector('[data-action="new-task"]')?.addEventListener('click', () => {
-    setState({
-      isTaskFormOpen: true,
-      editingTaskId: null,
-      formError: '',
+  app.querySelectorAll('[data-action="new-task"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      setState({
+        isTaskFormOpen: true,
+        editingTaskId: null,
+        formError: '',
+        isDrawerOpen: false,
+      });
+      renderApp();
     });
-    renderApp();
   });
 
-  app.querySelector('[data-action="new-document"]')?.addEventListener('click', () => {
-    setState({
-      isDocumentFormOpen: true,
-      editingDocumentId: null,
-      documentFormError: '',
+  app.querySelectorAll('[data-action="new-document"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      setState({
+        isDocumentFormOpen: true,
+        editingDocumentId: null,
+        documentFormError: '',
+        isDrawerOpen: false,
+      });
+      renderApp();
     });
-    renderApp();
   });
 
-  app.querySelector('[data-action="open-admin"]')?.addEventListener('click', () => {
-    setState({
-      isAdminPanelOpen: true,
-      isSettingsPanelOpen: false,
-      isTaskFormOpen: false,
-      isDocumentFormOpen: false,
-      editingTaskId: null,
-      editingDocumentId: null,
+  app.querySelectorAll('[data-action="open-admin"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      setState({
+        isAdminPanelOpen: true,
+        isSettingsPanelOpen: false,
+        isTaskFormOpen: false,
+        isDocumentFormOpen: false,
+        isDrawerOpen: false,
+        editingTaskId: null,
+        editingDocumentId: null,
+      });
+      renderApp();
     });
-    renderApp();
   });
 
-  app.querySelector('[data-action="open-settings"]')?.addEventListener('click', () => {
-    setState({
-      isSettingsPanelOpen: true,
-      isAdminPanelOpen: false,
-      isTaskFormOpen: false,
-      isDocumentFormOpen: false,
-      editingTaskId: null,
-      editingDocumentId: null,
+  app.querySelectorAll('[data-action="open-settings"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      setState({
+        isSettingsPanelOpen: true,
+        isAdminPanelOpen: false,
+        isTaskFormOpen: false,
+        isDocumentFormOpen: false,
+        isDrawerOpen: false,
+        editingTaskId: null,
+        editingDocumentId: null,
+      });
+      renderApp();
     });
-    renderApp();
+  });
+
+  app.querySelectorAll('[data-action="toggle-drawer"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      setState({ isDrawerOpen: !state.isDrawerOpen });
+      renderApp();
+    });
   });
 
   app.querySelector('[data-search-input]')?.addEventListener('input', (event) => {
@@ -921,6 +1098,9 @@ function bindShellEvents() {
         editingDocumentId: null,
         formError: '',
         documentInfoError: '',
+        isDrawerOpen: false,
+        mobileDetailOpen: false,
+        isLibraryDocOpen: false,
       });
       try {
         if (state.activeView === 'library') {
@@ -962,6 +1142,9 @@ function bindShellEvents() {
         editingDocumentId: null,
         formError: '',
         documentInfoError: '',
+        isDrawerOpen: false,
+        mobileDetailOpen: false,
+        isLibraryDocOpen: false,
       });
       if (nextView === 'library') {
         try {
