@@ -1,5 +1,6 @@
 import { state, setState, loadActiveProject, persistActiveProject } from './state.js';
-import { fetchProjects, createProject } from './projectApi.js';
+import { fetchProjects, createProject, updateProject, deleteProjectPermanent } from './projectApi.js';
+import { renderProjectManagerHtml } from './renderProjectManager.js';
 import {
   archiveTask,
   createTask,
@@ -1109,6 +1110,12 @@ function renderApp() {
       importMode: state.adminImportMode,
     }));
   }
+  if (state.isProjectManagerOpen) {
+    app.insertAdjacentHTML('beforeend', renderProjectManagerHtml({
+      projects: state.managedProjects,
+      error: state.projectManagerError,
+    }));
+  }
   if (state.isSettingsPanelOpen) {
     app.insertAdjacentHTML('beforeend', renderSettingsPanelHtml({
       activeSection: state.settingsSection,
@@ -1126,6 +1133,7 @@ function renderApp() {
   bindTaskFormEvents();
   bindDocumentFormEvents();
   bindAdminPanelEvents();
+  bindProjectManagerEvents();
   bindSettingsPanelEvents();
   bindLinkPickerEvents();
 }
@@ -1265,6 +1273,18 @@ function bindShellEvents() {
         else await loadTasks({ selectedTaskId: null });
       } catch {
         window.alert('Moomora Console could not create that project.');
+      }
+    });
+  });
+
+  app.querySelectorAll('[data-action="open-project-manager"]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      try {
+        const managed = await fetchProjects('all');
+        setState({ isProjectManagerOpen: true, managedProjects: managed, projectManagerError: '', isDrawerOpen: false });
+        renderApp();
+      } catch {
+        window.alert('Moomora Console could not load projects.');
       }
     });
   });
@@ -1508,6 +1528,102 @@ function bindAdminPanelEvents() {
       setState({ apiStatus: 'error' });
       renderError(error.message);
     }
+  });
+}
+
+async function refreshProjectManager() {
+  const managed = await fetchProjects('all');
+  await loadProjects();
+  if (state.activeProject !== 'all' && !state.projects.some((p) => p.id === state.activeProject)) {
+    setState({ activeProject: 'all' });
+    persistActiveProject('all');
+  }
+  setState({ managedProjects: managed });
+  renderApp();
+}
+
+function bindProjectManagerEvents() {
+  const panel = app.querySelector('[data-project-manager]');
+  if (!panel) return;
+
+  panel.querySelector('[data-action="close-project-manager"]')?.addEventListener('click', async () => {
+    setState({ isProjectManagerOpen: false, projectManagerError: '' });
+    try {
+      if (state.activeView === 'library') await loadDocuments({ selectedDocumentId: null });
+      else await loadTasks({ selectedTaskId: null });
+    } catch (error) {
+      setState({ apiStatus: 'error' });
+      renderError(error.message);
+    }
+  });
+
+  panel.querySelector('[data-action="manager-create"]')?.addEventListener('click', async () => {
+    const name = panel.querySelector('[data-project-new-name]')?.value?.trim();
+    if (!name) return;
+    try {
+      await createProject(name);
+      await refreshProjectManager();
+    } catch {
+      setState({ projectManagerError: 'Could not create that project.' });
+      renderApp();
+    }
+  });
+
+  panel.querySelectorAll('[data-action="manager-save"]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const id = button.dataset.projectId;
+      const name = panel.querySelector(`[data-project-name="${id}"]`)?.value?.trim();
+      const status = panel.querySelector(`[data-project-status="${id}"]`)?.value;
+      if (!name) {
+        setState({ projectManagerError: 'Project name is required.' });
+        renderApp();
+        return;
+      }
+      try {
+        await updateProject(id, { name, status });
+        await refreshProjectManager();
+      } catch {
+        setState({ projectManagerError: 'Could not save that project.' });
+        renderApp();
+      }
+    });
+  });
+
+  panel.querySelectorAll('[data-action="manager-delete"]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const id = button.dataset.projectId;
+      if (!window.confirm('Permanently delete this project? Only empty projects (no tasks or documents) can be deleted.')) return;
+      try {
+        await deleteProjectPermanent(id);
+        await refreshProjectManager();
+      } catch {
+        setState({ projectManagerError: 'Could not delete: the project still has tasks or documents.' });
+        renderApp();
+      }
+    });
+  });
+
+  const move = async (id, direction) => {
+    const ordered = [...state.managedProjects].sort((a, b) => a.sortOrder - b.sortOrder);
+    const index = ordered.findIndex((p) => p.id === id);
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    if (index < 0 || swapIndex < 0 || swapIndex >= ordered.length) return;
+    const current = ordered[index];
+    const neighbor = ordered[swapIndex];
+    try {
+      await updateProject(current.id, { sortOrder: neighbor.sortOrder });
+      await updateProject(neighbor.id, { sortOrder: current.sortOrder });
+      await refreshProjectManager();
+    } catch {
+      setState({ projectManagerError: 'Could not reorder projects.' });
+      renderApp();
+    }
+  };
+  panel.querySelectorAll('[data-action="manager-move-up"]').forEach((button) => {
+    button.addEventListener('click', () => move(button.dataset.projectId, 'up'));
+  });
+  panel.querySelectorAll('[data-action="manager-move-down"]').forEach((button) => {
+    button.addEventListener('click', () => move(button.dataset.projectId, 'down'));
   });
 }
 
