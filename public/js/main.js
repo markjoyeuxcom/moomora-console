@@ -49,10 +49,12 @@ import {
   renameSavedLibraryView,
   savedLibraryViewsFromJson,
 } from './librarySavedViews.js';
+import { installKeyboardShortcuts } from './keyboardShortcuts.js';
 
 const app = document.getElementById('app');
 const SAVED_LIBRARY_VIEWS_KEY = 'moomora.librarySavedViews.v1';
 const LIBRARY_BROWSER_WIDTH_KEY = 'moomora.libraryBrowserWidth.v1';
+const LIBRARY_CONTROLS_KEY = 'moomora.libraryControls.v1';
 const DOCUMENT_AUTOSAVE_DELAY_MS = 1200;
 let documentAutosaveTimer = null;
 let isSavingDocumentDraft = false;
@@ -137,6 +139,32 @@ function persistSavedLibraryViews() {
     window.localStorage?.setItem(SAVED_LIBRARY_VIEWS_KEY, JSON.stringify(state.librarySavedViews));
   } catch {
     // Local persistence is a convenience; the Library still works without it.
+  }
+}
+
+function persistLibraryControls() {
+  try {
+    window.localStorage?.setItem(LIBRARY_CONTROLS_KEY, JSON.stringify({
+      typeFilter: state.libraryTypeFilter,
+      sortBy: state.librarySortBy,
+      groupByType: state.libraryGroupByType,
+    }));
+  } catch {
+    // Local persistence is a convenience; controls still work without it.
+  }
+}
+
+function loadLibraryControls() {
+  try {
+    const parsed = JSON.parse(window.localStorage?.getItem(LIBRARY_CONTROLS_KEY) || 'null');
+    if (!parsed || typeof parsed !== 'object') return {};
+    const patch = {};
+    if (['all', 'runbook', 'note'].includes(parsed.typeFilter)) patch.libraryTypeFilter = parsed.typeFilter;
+    if (['updated', 'created', 'title', 'type'].includes(parsed.sortBy)) patch.librarySortBy = parsed.sortBy;
+    if (typeof parsed.groupByType === 'boolean') patch.libraryGroupByType = parsed.groupByType;
+    return patch;
+  } catch {
+    return {};
   }
 }
 
@@ -390,17 +418,20 @@ function renderLibraryWorkspace(workspace) {
   workspace.querySelectorAll('[data-library-type]').forEach((btn) => {
     btn.addEventListener('click', () => {
       setState({ libraryTypeFilter: btn.dataset.libraryType });
+      persistLibraryControls();
       renderWorkspace();
     });
   });
 
   workspace.querySelector('[data-library-sort]')?.addEventListener('change', (event) => {
     setState({ librarySortBy: event.target.value });
+    persistLibraryControls();
     renderWorkspace();
   });
 
   workspace.querySelector('[data-action="toggle-library-group"]')?.addEventListener('click', () => {
     setState({ libraryGroupByType: !state.libraryGroupByType });
+    persistLibraryControls();
     renderWorkspace();
   });
 
@@ -1537,12 +1568,51 @@ async function init() {
     setState({
       preferences,
       librarySavedViews: savedLibraryViewsFromJson(window.localStorage?.getItem(SAVED_LIBRARY_VIEWS_KEY)),
+      ...loadLibraryControls(),
     });
     await loadTasks();
   } catch (error) {
     setState({ apiStatus: 'error' });
     renderError(error.message);
   }
+
+  installKeyboardShortcuts({
+    getState: () => state,
+    handlers: {
+      focusSearch() {
+        const input = app.querySelector('[data-search-input]');
+        if (input) { input.focus(); input.select?.(); }
+      },
+      newItem() {
+        app.querySelector('.topbar [data-action="new-task"], .topbar [data-action="new-document"]')?.click();
+      },
+      switchView(view) {
+        const el = app.querySelector(`.side-nav [data-view="${view}"]`) || app.querySelector(`[data-view="${view}"]`);
+        el?.click();
+      },
+      editSelected() {
+        if (state.activeView === 'library') {
+          app.querySelector('[data-library-mode="edit"]')?.click();
+        } else {
+          app.querySelector('[data-action="edit-task"]')?.click();
+        }
+      },
+      archiveSelected() {
+        if (state.activeView === 'library') {
+          app.querySelector('[data-action="archive-document"]')?.click();
+        } else {
+          app.querySelector('[data-action="archive-task"]')?.click();
+        }
+      },
+      escape() {
+        const closer = app.querySelector('[data-action="close-task-form"], [data-action="close-document-form"], [data-action="close-admin"], [data-action="close-settings"]');
+        if (closer) { closer.click(); return; }
+        if (state.isDrawerOpen) { app.querySelector('[data-action="toggle-drawer"]')?.click(); return; }
+        if (state.mobileDetailOpen) { app.querySelector('[data-action="close-mobile-detail"]')?.click(); return; }
+        if (state.isLibraryDocOpen) { app.querySelector('[data-action="close-library-doc"]')?.click(); return; }
+      },
+    },
+  });
 }
 
 init();

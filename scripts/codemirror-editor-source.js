@@ -18,27 +18,30 @@ import { tags } from '@lezer/highlight';
 
 import { applyMarkdownFormat } from '../public/js/markdownEditor.js';
 
+// Colors reference CSS custom properties so the editor follows the active
+// palette (console / graphite / daylight). CodeMirror injects these as real
+// CSS, so var() and color-mix() resolve against :root at paint time.
 const operatorTheme = EditorView.theme({
-  '&': { backgroundColor: '#0d0e0f', color: '#c8c8c8' },
+  '&': { backgroundColor: 'var(--bg)', color: 'var(--text-body)' },
   '.cm-scroller': { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace' },
-  '.cm-content': { caretColor: '#f8f2c6', padding: '14px' },
-  '.cm-gutters': { backgroundColor: '#08090a', color: '#5a5d60', border: 'none', borderRight: '1px solid #1f2021' },
-  '.cm-activeLineGutter': { backgroundColor: 'rgba(135, 215, 95, 0.06)', color: '#87d75f' },
-  '.cm-activeLine': { backgroundColor: 'rgba(135, 215, 95, 0.04)' },
-  '.cm-cursor, .cm-dropCursor': { borderLeftColor: '#f8f2c6', borderLeftWidth: '2px' },
-  '.cm-selectionBackground, .cm-content ::selection': { backgroundColor: 'rgba(135, 215, 95, 0.22) !important' },
+  '.cm-content': { caretColor: 'var(--caret)', padding: '14px' },
+  '.cm-gutters': { backgroundColor: 'var(--bg-deep)', color: 'var(--text-dimmer)', border: 'none', borderRight: '1px solid var(--border)' },
+  '.cm-activeLineGutter': { backgroundColor: 'color-mix(in srgb, var(--accent) 6%, transparent)', color: 'var(--accent)' },
+  '.cm-activeLine': { backgroundColor: 'color-mix(in srgb, var(--accent) 4%, transparent)' },
+  '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--caret)', borderLeftWidth: '2px' },
+  '.cm-selectionBackground, .cm-content ::selection': { backgroundColor: 'color-mix(in srgb, var(--accent) 22%, transparent) !important' },
   '.cm-focused': { outline: 'none' },
 }, { dark: true });
 
 const operatorHighlight = HighlightStyle.define([
-  { tag: tags.heading,         color: '#87d75f', fontWeight: '700' },
-  { tag: tags.strong,          color: '#d7af5f', fontWeight: '700' },
-  { tag: tags.emphasis,        color: '#c8c8c8', fontStyle: 'italic' },
-  { tag: tags.link,            color: '#87afff', textDecoration: 'underline' },
-  { tag: tags.monospace,       color: '#d7af5f', backgroundColor: '#08090a' },
-  { tag: tags.quote,           color: '#87afff' },
-  { tag: tags.keyword,         color: '#87d75f' },
-  { tag: tags.comment,         color: '#5a5d60', fontStyle: 'italic' },
+  { tag: tags.heading,         color: 'var(--accent)', fontWeight: '700' },
+  { tag: tags.strong,          color: 'var(--accent-amber)', fontWeight: '700' },
+  { tag: tags.emphasis,        color: 'var(--text-body)', fontStyle: 'italic' },
+  { tag: tags.link,            color: 'var(--accent-cyan)', textDecoration: 'underline' },
+  { tag: tags.monospace,       color: 'var(--accent-amber)', backgroundColor: 'var(--bg-deep)' },
+  { tag: tags.quote,           color: 'var(--accent-cyan)' },
+  { tag: tags.keyword,         color: 'var(--accent)' },
+  { tag: tags.comment,         color: 'var(--text-dimmer)', fontStyle: 'italic' },
 ]);
 
 function saveKeymap(onSave) {
