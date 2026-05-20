@@ -1,4 +1,5 @@
-import { state, setState } from './state.js';
+import { state, setState, loadActiveProject, persistActiveProject } from './state.js';
+import { fetchProjects, createProject } from './projectApi.js';
 import {
   archiveTask,
   createTask,
@@ -107,7 +108,9 @@ function editingTask() {
 
 function visibleDocumentsForCurrentView() {
   const query = state.searchQuery.trim().toLowerCase();
-  const contextDocuments = state.documents.filter(document => document.context === state.activeContext);
+  const contextDocuments = state.activeProject === 'all'
+    ? state.documents
+    : state.documents.filter(document => document.projectId === state.activeProject);
   const taggedDocuments = filterDocumentsByTags(contextDocuments, state.activeLibraryTags);
   const typeFilteredDocuments = filterDocumentsByType(taggedDocuments, state.libraryTypeFilter);
   const searchedDocuments = query
@@ -326,8 +329,7 @@ function renderWorkspace() {
   workspace.querySelectorAll('[data-action="open-linked-doc"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const docId = btn.dataset.documentId;
-      const docContext = btn.dataset.documentContext || state.activeContext;
-      setState({ activeView: 'library', activeContext: docContext, selectedDocumentId: docId, mobileDetailOpen: false });
+      setState({ activeView: 'library', selectedDocumentId: docId, mobileDetailOpen: false });
       try {
         await loadDocuments({ selectedDocumentId: docId });
       } catch (error) {
@@ -426,7 +428,9 @@ function setupLibraryResizer(workspace, libraryWorkspaceElement) {
 }
 
 function renderLibraryWorkspace(workspace) {
-  const contextDocuments = state.documents.filter(document => document.context === state.activeContext);
+  const contextDocuments = state.activeProject === 'all'
+    ? state.documents
+    : state.documents.filter(document => document.projectId === state.activeProject);
   const visibleDocuments = visibleDocumentsForCurrentView();
   const document = selectedDocument();
   workspace.innerHTML = renderLibraryHtml({
@@ -1070,7 +1074,8 @@ function renderWorkspacePrimary(visibleTasks, selectedTaskId) {
 function renderApp() {
   const metrics = buildMetrics(state.tasks, today());
   app.innerHTML = renderShellHtml({
-    activeContext: state.activeContext,
+    activeProject: state.activeProject,
+    projects: state.projects,
     activeView: state.activeView,
     apiStatus: state.apiStatus,
     searchQuery: state.searchQuery,
@@ -1081,7 +1086,8 @@ function renderApp() {
   if (state.isTaskFormOpen) {
     app.insertAdjacentHTML('beforeend', renderTaskFormHtml({
       task: editingTask(),
-      activeContext: state.activeContext,
+      projects: state.projects,
+      values: { project: editingTask()?.projectId || defaultProjectId() },
       error: state.formError,
       isSaving: state.isSaving,
     }));
@@ -1089,14 +1095,16 @@ function renderApp() {
   if (state.isDocumentFormOpen) {
     app.insertAdjacentHTML('beforeend', renderDocumentFormHtml({
       document: editingDocument(),
-      activeContext: state.activeContext,
+      projects: state.projects,
+      values: { project: editingDocument()?.projectId || defaultProjectId() },
       error: state.documentFormError,
       isSaving: state.isSaving,
     }));
   }
   if (state.isAdminPanelOpen) {
     app.insertAdjacentHTML('beforeend', renderAdminPanelHtml({
-      activeContext: state.activeContext,
+      activeProject: state.activeProject,
+      projects: state.projects,
       taskCount: state.tasks.length,
       importMode: state.adminImportMode,
     }));
@@ -1200,46 +1208,30 @@ function bindShellEvents() {
     renderWorkspace();
   });
 
-  app.querySelectorAll('[data-context]').forEach((button) => {
+  app.querySelectorAll('[data-project]').forEach((button) => {
     button.addEventListener('click', async () => {
-      const nextContext = button.dataset.context;
-      if (!nextContext || nextContext === state.activeContext) return;
-      clearDocumentAutosave();
-      setState({
-        activeContext: nextContext,
-        selectedTaskId: null,
-        selectedDocumentId: null,
-        activeLibraryTags: [],
-        libraryTagQuery: '',
-        areLibraryTagsExpanded: false,
-        documentDraftId: null,
-        documentDraftBody: '',
-        isDocumentDirty: false,
-        documentSaveStatus: 'Saved',
-        isDocumentFocusMode: false,
-        isTaskFormOpen: false,
-        isAdminPanelOpen: false,
-        isDocumentFormOpen: false,
-        isDocumentInfoEditorOpen: false,
-        editingTaskId: null,
-        editingDocumentId: null,
-        formError: '',
-        documentInfoError: '',
-        isDrawerOpen: false,
-        mobileDetailOpen: false,
-        isLibraryDocOpen: false,
-        isLinkPickerOpen: false,
-      });
-      try {
-        if (state.activeView === 'library') {
-          await loadDocuments({ selectedDocumentId: null });
-        } else {
-          await loadTasks({ selectedTaskId: null });
-        }
-      } catch (error) {
-        setState({ apiStatus: 'error' });
-        renderError(error.message);
+      const nextProject = button.dataset.project;
+      if (!nextProject || nextProject === state.activeProject) return;
+      setState({ activeProject: nextProject, selectedTaskId: null, selectedDocumentId: null, mobileDetailOpen: false });
+      persistActiveProject(nextProject);
+      if (state.activeView === 'library') {
+        await loadDocuments({ selectedDocumentId: null });
+      } else {
+        await loadTasks({ selectedTaskId: null });
       }
+    });
+  });
+
+  app.querySelectorAll('[data-action="new-project"]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const name = window.prompt('New project name');
+      if (!name || !name.trim()) return;
+      const project = await createProject(name.trim());
+      await loadProjects();
+      setState({ activeProject: project.id });
+      persistActiveProject(project.id);
+      if (state.activeView === 'library') await loadDocuments({ selectedDocumentId: null });
+      else await loadTasks({ selectedTaskId: null });
     });
   });
 
@@ -1333,7 +1325,7 @@ function bindDocumentFormEvents() {
       title,
       body: String(data.get('body') || ''),
       documentType: String(data.get('documentType') || 'note'),
-      context: String(data.get('context') || state.activeContext),
+      project: String(data.get('project') || defaultProjectId()),
       tags: tagsFromFormValue(data.get('tags')),
       sourceFilename: String(data.get('sourceFilename') || '').trim() || null,
     };
@@ -1346,8 +1338,10 @@ function bindDocumentFormEvents() {
         ? await updateDocument(state.editingDocumentId, payload)
         : await createDocument(payload);
 
+      const nextProject = savedDocument.projectId || state.activeProject;
+      persistActiveProject(nextProject);
       setState({
-        activeContext: savedDocument.context || payload.context,
+        activeProject: nextProject,
         selectedDocumentId: savedDocument.id,
         isDocumentFormOpen: false,
         editingDocumentId: null,
@@ -1365,14 +1359,14 @@ function bindDocumentFormEvents() {
   });
 }
 
-async function exportAdminTasks(context) {
+async function exportAdminTasks(project) {
   try {
-    const exported = await exportTasks({ context });
-    downloadJsonFile(exportFilename(context), exported);
+    const exported = await exportTasks({ project });
+    downloadJsonFile(exportFilename(project), exported);
   } catch {
-    window.alert(context === 'all'
-      ? 'Moomora Console could not export all contexts.'
-      : 'Moomora Console could not export this context.');
+    window.alert(project === 'all'
+      ? 'Moomora Console could not export all projects.'
+      : 'Moomora Console could not export this project.');
   }
 }
 
@@ -1396,7 +1390,7 @@ async function importAdminFile(file, panel) {
   try {
     const payload = JSON.parse(await file.text());
     const tasks = tasksFromImportPayload(payload);
-    const result = await importTasks({ context: state.activeContext, mode, tasks });
+    const result = await importTasks({ project: state.activeProject === 'all' ? (state.projects[0]?.id) : state.activeProject, mode, tasks });
     const skipped = result.skipped ? ` Skipped ${result.skipped}.` : '';
     window.alert(`Imported ${result.imported} ${result.imported === 1 ? 'task' : 'tasks'}.${skipped}`);
     setState({ isAdminPanelOpen: false });
@@ -1413,7 +1407,7 @@ async function importLibraryMarkdownFile(file) {
       title: titleFromMarkdown(body, file.name),
       body,
       documentType: 'note',
-      context: state.activeContext,
+      project: defaultProjectId(),
       tags: [],
       sourceFilename: file.name || null,
     });
@@ -1433,8 +1427,8 @@ function bindAdminPanelEvents() {
     renderApp();
   });
 
-  panel.querySelector('[data-action="export-context"]')?.addEventListener('click', () => {
-    exportAdminTasks(state.activeContext);
+  panel.querySelector('[data-action="export-project"]')?.addEventListener('click', () => {
+    exportAdminTasks(state.activeProject);
   });
 
   panel.querySelector('[data-action="export-all"]')?.addEventListener('click', () => {
@@ -1601,7 +1595,7 @@ function bindTaskFormEvents() {
       description: String(data.get('description') || '').trim(),
       priority: String(data.get('priority') || 'medium'),
       status: String(data.get('status') || 'planned'),
-      context: String(data.get('context') || state.activeContext),
+      project: String(data.get('project') || defaultProjectId()),
       dueDate: String(data.get('dueDate') || '') || null,
     };
 
@@ -1613,8 +1607,10 @@ function bindTaskFormEvents() {
         ? await updateTask(state.editingTaskId, payload)
         : await createTask({ ...payload, sortOrder: state.tasks.length });
 
+      const nextProject = savedTask.projectId || state.activeProject;
+      persistActiveProject(nextProject);
       setState({
-        activeContext: savedTask.context || payload.context,
+        activeProject: nextProject,
         selectedTaskId: savedTask.id,
         isTaskFormOpen: false,
         editingTaskId: null,
@@ -1632,11 +1628,21 @@ function bindTaskFormEvents() {
   });
 }
 
+async function loadProjects() {
+  const projects = await fetchProjects('active');
+  setState({ projects });
+  return projects;
+}
+
+function defaultProjectId() {
+  return state.activeProject !== 'all' ? state.activeProject : (state.projects[0]?.id || '');
+}
+
 async function loadTasks({ selectedTaskId = state.selectedTaskId } = {}) {
   setState({ apiStatus: 'loading' });
   renderLoading();
   const tasks = await fetchTasks({
-    context: state.activeContext,
+    project: state.activeProject === 'all' ? undefined : state.activeProject,
     archived: isArchiveView(state.activeView) ? true : undefined,
   });
   const normalizedTasks = tasks.map(normalizeTask);
@@ -1655,7 +1661,7 @@ async function loadDocuments({ selectedDocumentId = state.selectedDocumentId } =
   setState({ apiStatus: 'loading' });
   renderLoading();
   const documents = await fetchDocuments({
-    context: state.activeContext,
+    project: state.activeProject === 'all' ? undefined : state.activeProject,
     archived: 'all',
   });
   const selectedDocumentExists = documents.some(document => document.id === selectedDocumentId);
@@ -1678,6 +1684,10 @@ async function init() {
       librarySavedViews: savedLibraryViewsFromJson(window.localStorage?.getItem(SAVED_LIBRARY_VIEWS_KEY)),
       ...loadLibraryControls(),
     });
+    await loadProjects();
+    const stored = loadActiveProject();
+    const valid = stored === 'all' || state.projects.some((p) => p.id === stored);
+    setState({ activeProject: valid ? stored : 'all' });
     await loadTasks();
   } catch (error) {
     setState({ apiStatus: 'error' });
