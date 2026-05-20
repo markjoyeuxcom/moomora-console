@@ -239,6 +239,7 @@ export function renderShellHtml({
           <div class="topbar-actions">
             <button type="button" data-action="open-settings" class="bracket-button">[~] settings</button>
             <button type="button" data-action="open-admin" class="bracket-button">[a] admin</button>
+            ${isLibraryView ? '<button type="button" data-action="import-document" class="bracket-button">[↑] import</button>' : ''}
             <button type="button" data-action="${primaryAction.action}" class="bracket-button bracket-button--primary">[+] ${primaryAction.label === 'New Document' ? 'new doc' : 'new'}</button>
           </div>
         </header>

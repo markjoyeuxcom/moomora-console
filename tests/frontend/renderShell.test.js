@@ -79,7 +79,7 @@ test('renderShellHtml includes workflow hooks for search, context, and actions',
   assert.match(html, /data-action="new-task"/);
   assert.match(html, /data-action="open-settings"/);
   assert.match(html, /data-action="open-admin"/);
-  assert.doesNotMatch(html, /data-action="import"/);
+  assert.doesNotMatch(html, /data-action="import-document"/);
   assert.doesNotMatch(html, /data-action="export"/);
   assert.match(html, /value="backup"/);
 });
@@ -179,4 +179,11 @@ test('shell renders hamburger trigger button', () => {
     metrics: { dueToday: 0, overdue: 0, inProgress: 0, completedThisWeek: 0 },
   });
   assert.match(html, /class="hamburger-trigger"[^>]*data-action="toggle-drawer"/);
+});
+
+test('topbar shows [↑] import only on the library view', () => {
+  const lib = renderShellHtml({ activeContext: 'homelab', activeView: 'library', apiStatus: 'connected', searchQuery: '', metrics: {} });
+  assert.match(lib, /data-action="import-document"[^>]*>\[↑\] import/);
+  const today = renderShellHtml({ activeContext: 'homelab', activeView: 'list', apiStatus: 'connected', searchQuery: '', metrics: {} });
+  assert.doesNotMatch(today, /data-action="import-document"/);
 });

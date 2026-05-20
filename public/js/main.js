@@ -1183,6 +1183,17 @@ function bindShellEvents() {
     });
   });
 
+  app.querySelector('[data-action="import-document"]')?.addEventListener('click', () => {
+    const input = globalThis.document.createElement('input');
+    input.type = 'file';
+    input.accept = 'text/markdown,.md,.markdown';
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      if (file) importLibraryMarkdownFile(file);
+    });
+    input.click();
+  });
+
   app.querySelector('[data-search-input]')?.addEventListener('input', (event) => {
     setState({ searchQuery: event.target.value });
     renderWorkspace();
@@ -1394,29 +1405,19 @@ async function importAdminFile(file, panel) {
   }
 }
 
-function selectedAdminMarkdownType(panel) {
-  const checked = panel.querySelector('[name="admin-markdown-type"]:checked');
-  return checked?.value === 'runbook' ? 'runbook' : 'note';
-}
-
-async function importAdminMarkdownFile(file, panel) {
+async function importLibraryMarkdownFile(file) {
   try {
     const body = await file.text();
-    const document = await createDocument({
+    const doc = await createDocument({
       title: titleFromMarkdown(body, file.name),
       body,
-      documentType: selectedAdminMarkdownType(panel),
+      documentType: 'note',
       context: state.activeContext,
       tags: [],
       sourceFilename: file.name || null,
     });
-    window.alert(`Imported "${document.title}" into the Library.`);
-    setState({ isAdminPanelOpen: false });
-    if (state.activeView === 'library') {
-      await loadDocuments({ selectedDocumentId: document.id });
-    } else {
-      renderApp();
-    }
+    window.alert(`Imported "${doc.title}" into the Library.`);
+    await loadDocuments({ selectedDocumentId: doc.id });
   } catch {
     window.alert('Moomora Console could not import that Markdown file.');
   }
@@ -1449,13 +1450,6 @@ function bindAdminPanelEvents() {
     const file = event.target.files?.[0];
     if (!file) return;
     await importAdminFile(file, panel);
-    event.target.value = '';
-  });
-
-  panel.querySelector('[data-admin-markdown-file]')?.addEventListener('change', async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    await importAdminMarkdownFile(file, panel);
     event.target.value = '';
   });
 
