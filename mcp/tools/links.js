@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { isValidUuid } from '../validate.js';
 import { okResult, errorResult, withErrorHandling } from '../toolResult.js';
+import { capResults } from '../shape.js';
 
 export function createLinkTools(client) {
   return [
@@ -15,7 +16,7 @@ export function createLinkTools(client) {
       handler: withErrorHandling(async ({ taskId }) => {
         if (!isValidUuid(taskId)) return errorResult('taskId must be a valid UUID.');
         const docs = await client.listTaskDocuments(taskId);
-        return okResult(docs ?? []);
+        return okResult(capResults(docs ?? []));
       }),
     },
     {
