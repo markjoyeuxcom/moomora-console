@@ -74,6 +74,12 @@ test('updateDocument returns null on 404', async () => {
   assert.equal(await client.updateDocument('x', { title: 'y' }), null);
 });
 
+test('updateTask returns null on 404', async () => {
+  const fetch = recordingFetch(jsonResponse(404, { message: 'task not found' }));
+  const client = createMoomoraClient({ baseUrl: BASE, fetch });
+  assert.equal(await client.updateTask('x', { status: 'completed' }), null);
+});
+
 test('linkTaskDocument posts documentId in the body', async () => {
   const fetch = recordingFetch(jsonResponse(201, { linked: true }));
   const client = createMoomoraClient({ baseUrl: BASE, fetch });

@@ -21,11 +21,13 @@ export function createMoomoraClient({
       }
     }
 
-    const headers = { 'content-type': 'application/json' };
+    const headers = {};
     if (token) headers.authorization = `Bearer ${token}`;
+    if (body !== undefined) headers['content-type'] = 'application/json';
 
     let response;
     try {
+      // Requires native fetch (Node 17.3+). A non-native injected fetch may ignore `signal`, dropping the timeout.
       response = await fetch(url.toString(), {
         method,
         headers,
@@ -71,7 +73,7 @@ export function createMoomoraClient({
       request('GET', '/api/library/documents', { query: { q, context, documentType } }),
 
     getDocument: async (id) => {
-      const docs = await request('GET', '/api/library/documents', {});
+      const docs = await request('GET', '/api/library/documents');
       return (Array.isArray(docs) ? docs : []).find((doc) => doc.id === id) || null;
     },
 
@@ -85,7 +87,7 @@ export function createMoomoraClient({
       request('GET', '/api/tasks', { query: { q, context, status } }),
 
     getTask: async (id) => {
-      const tasks = await request('GET', '/api/tasks', {});
+      const tasks = await request('GET', '/api/tasks');
       return (Array.isArray(tasks) ? tasks : []).find((task) => task.id === id) || null;
     },
 
