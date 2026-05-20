@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildServer } from '../../mcp/server.js';
 
+const EXPECTED_TOOL_COUNT = 11; // 4 document + 4 task + 3 link tools
+
 test('registers all 11 tools with unique names', () => {
   const registered = [];
   const fakeServer = {
@@ -12,8 +14,8 @@ test('registers all 11 tools with unique names', () => {
   buildServer({ server: fakeServer, client: {} });
 
   const names = registered.map((r) => r.name);
-  assert.equal(names.length, 11);
-  assert.equal(new Set(names).size, 11, 'tool names must be unique');
+  assert.equal(names.length, EXPECTED_TOOL_COUNT);
+  assert.equal(new Set(names).size, EXPECTED_TOOL_COUNT, 'tool names must be unique');
   for (const expected of [
     'search_documents', 'get_document', 'create_document', 'update_document',
     'search_tasks', 'get_task', 'create_task', 'update_task',

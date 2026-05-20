@@ -5,7 +5,8 @@ Moomora's HTTP API to Claude Code as tools, so you can search, read, create, edi
 cross-link tasks and library documents interactively — running on your Claude Pro/Max
 subscription rather than the Anthropic API.
 
-Design spec: `docs/superpowers/specs/2026-05-20-moomora-mcp-design.md`.
+Internal design spec (for contributors with the repo checked out):
+`docs/superpowers/specs/2026-05-20-moomora-mcp-design.md`.
 
 ## Prerequisites
 

@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
@@ -40,7 +42,8 @@ async function main() {
   console.error('Moomora MCP server running on stdio');
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Robust "is this the entry module?" check across platforms (handles Windows paths).
+if (process.argv[1] && process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch((err) => {
     console.error(err);
     process.exit(1);
