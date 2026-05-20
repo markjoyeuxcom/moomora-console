@@ -122,6 +122,26 @@ test('GET /api/library/documents rejects unknown project with 400', async () => 
   await app.close();
 });
 
+test('GET /api/library/documents with no project returns across all projects', async () => {
+  const calls = [];
+  const repository = {
+    ...createFakeLibraryRepository(),
+    async listDocuments(filters) { calls.push(filters); return []; },
+  };
+  const app = await buildApp({
+    skipDb: true,
+    tasksRepository: { listTasks: async () => [] },
+    libraryRepository: repository,
+    projectsRepository: createFakeProjectsRepository(),
+  });
+
+  const response = await app.inject({ method: 'GET', url: '/api/library/documents' });
+  assert.equal(response.statusCode, 200);
+  assert.equal(calls[0].projectId, undefined);
+
+  await app.close();
+});
+
 test('POST /api/library/documents creates a Markdown document', async () => {
   let capturedDoc;
   const fakeRepo = createFakeLibraryRepository();
