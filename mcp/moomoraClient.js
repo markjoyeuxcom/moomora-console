@@ -9,6 +9,13 @@ export function createMoomoraClient({
   fetch = globalThis.fetch,
   timeoutMs = DEFAULT_TIMEOUT_MS,
 } = {}) {
+  // AbortSignal.timeout throws a synchronous TypeError for invalid delays
+  // (negative/NaN/Infinity/out-of-range). Fail loudly as a config error here
+  // rather than misclassifying it later as "API not reachable".
+  if (!Number.isFinite(timeoutMs) || timeoutMs < 0) {
+    throw new TypeError('timeoutMs must be a non-negative finite number');
+  }
+
   const root = String(baseUrl).replace(/\/+$/, '');
 
   async function request(method, path, { query, body } = {}) {

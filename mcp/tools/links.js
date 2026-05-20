@@ -30,8 +30,15 @@ export function createLinkTools(client) {
       handler: withErrorHandling(async ({ taskId, documentId }) => {
         if (!isValidUuid(taskId)) return errorResult('taskId must be a valid UUID.');
         if (!isValidUuid(documentId)) return errorResult('documentId must be a valid UUID.');
+        // The API returns the updated linked-document list on success. Always
+        // return a stable confirmation shape, with that list under `documents`.
         const result = await client.linkTaskDocument(taskId, documentId);
-        return okResult(result ?? { linked: true, taskId, documentId });
+        return okResult({
+          linked: true,
+          taskId,
+          documentId,
+          documents: Array.isArray(result) ? result : [],
+        });
       }),
     },
     {

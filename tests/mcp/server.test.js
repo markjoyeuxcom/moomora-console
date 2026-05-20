@@ -33,7 +33,7 @@ test('each registered tool has a title, description, inputSchema, and handler', 
   for (const { config, handler } of registered) {
     assert.equal(typeof config.title, 'string');
     assert.equal(typeof config.description, 'string');
-    assert.equal(typeof config.inputSchema, 'object');
+    assert.ok(config.inputSchema && typeof config.inputSchema === 'object', 'inputSchema must be a non-null object');
     assert.equal(typeof handler, 'function');
   }
 });

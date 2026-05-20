@@ -42,12 +42,33 @@ test('list_task_documents caps the result at 20', async () => {
 
 test('link_task_document validates both UUIDs then calls the client', async () => {
   let received;
-  const client = { linkTaskDocument: async (t, d) => { received = [t, d]; return { linked: true }; } };
+  const client = { linkTaskDocument: async (t, d) => { received = [t, d]; return [{ id: DOC_ID }]; } };
   const tool = byName(createLinkTools(client), 'link_task_document');
   assert.match((await tool.handler({ taskId: 'bad', documentId: DOC_ID })).content[0].text, /valid UUID/);
   assert.match((await tool.handler({ taskId: TASK_ID, documentId: 'bad' })).content[0].text, /valid UUID/);
   await tool.handler({ taskId: TASK_ID, documentId: DOC_ID });
   assert.deepEqual(received, [TASK_ID, DOC_ID]);
+});
+
+test('link_task_document returns a stable confirmation shape with the doc list', async () => {
+  const client = { linkTaskDocument: async () => [{ id: DOC_ID, title: 'Runbook' }] };
+  const tool = byName(createLinkTools(client), 'link_task_document');
+  const res = await tool.handler({ taskId: TASK_ID, documentId: DOC_ID });
+  assert.deepEqual(JSON.parse(res.content[0].text), {
+    linked: true,
+    taskId: TASK_ID,
+    documentId: DOC_ID,
+    documents: [{ id: DOC_ID, title: 'Runbook' }],
+  });
+});
+
+test('link_task_document tolerates a non-array client result', async () => {
+  const client = { linkTaskDocument: async () => null };
+  const tool = byName(createLinkTools(client), 'link_task_document');
+  const res = await tool.handler({ taskId: TASK_ID, documentId: DOC_ID });
+  const data = JSON.parse(res.content[0].text);
+  assert.equal(data.linked, true);
+  assert.deepEqual(data.documents, []);
 });
 
 test('unlink_task_document validates UUIDs and reports success', async () => {

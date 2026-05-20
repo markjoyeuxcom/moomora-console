@@ -124,3 +124,12 @@ test('fetch rejection maps to MoomoraUnavailableError', async () => {
     (err) => err instanceof MoomoraUnavailableError && /not reachable/.test(err.message),
   );
 });
+
+test('rejects an invalid timeoutMs as a configuration error', () => {
+  for (const bad of [-1, Number.NaN, Infinity]) {
+    assert.throws(
+      () => createMoomoraClient({ baseUrl: BASE, fetch: async () => {}, timeoutMs: bad }),
+      (err) => err instanceof TypeError && /timeoutMs/.test(err.message),
+    );
+  }
+});
