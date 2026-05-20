@@ -50,11 +50,11 @@ test('adds Authorization header only when a token is set', async () => {
 test('createDocument POSTs a JSON body and returns the created doc', async () => {
   const fetch = recordingFetch(jsonResponse(201, { id: 'd9', title: 'New' }));
   const client = createMoomoraClient({ baseUrl: BASE, fetch });
-  const doc = await client.createDocument({ title: 'New', body: 'b', documentType: 'note', context: 'work' });
+  const doc = await client.createDocument({ title: 'New', body: 'b', documentType: 'note', project: 'work' });
   assert.deepEqual(doc, { id: 'd9', title: 'New' });
   assert.equal(fetch.calls[0].options.method, 'POST');
   assert.deepEqual(JSON.parse(fetch.calls[0].options.body), {
-    title: 'New', body: 'b', documentType: 'note', context: 'work',
+    title: 'New', body: 'b', documentType: 'note', project: 'work',
   });
 });
 

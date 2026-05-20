@@ -36,7 +36,7 @@ test('search_documents maps args to listDocuments and returns refs without bodie
   assert.equal(data[0].snippet, 'long runbook body');
 });
 
-test('search_documents allows an omitted query (browse by context/tags)', async () => {
+test('search_documents allows an omitted query (browse by project/tags)', async () => {
   let received;
   const client = { listDocuments: async (filters) => { received = filters; return [SAMPLE_DOC]; } };
   const tool = byName(createDocumentTools(client), 'search_documents');
