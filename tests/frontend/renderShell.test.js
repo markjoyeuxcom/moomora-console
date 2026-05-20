@@ -220,6 +220,21 @@ test('shell renders hamburger drawer with backlog, admin, and projects', () => {
   // Drawer shows projects section
   assert.match(html, /data-project="all"/);
   assert.match(html, /data-project="p1"/);
+  // Drawer active state follows activeProject ('all' here)
+  assert.match(html, /class="hamburger-drawer__item is-active"[^>]*data-project="all"/);
+  assert.doesNotMatch(html, /class="hamburger-drawer__item is-active"[^>]*data-project="p1"/);
+});
+
+test('project name with HTML characters is escaped in the nav and breadcrumb', () => {
+  const html = renderShellHtml({
+    activeProject: 'p1',
+    projects: [{ id: 'p1', name: '<script>alert(1)</script>', slug: 'x', status: 'active' }],
+    activeView: 'list',
+    apiStatus: 'connected', searchQuery: '',
+    metrics: { dueToday: 0, overdue: 0, inProgress: 0, completedThisWeek: 0 },
+  });
+  assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/);
+  assert.match(html, /&lt;script&gt;/);
 });
 
 test('shell drawer is open when isDrawerOpen is true', () => {
