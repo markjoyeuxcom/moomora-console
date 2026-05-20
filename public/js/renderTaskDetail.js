@@ -45,6 +45,29 @@ function renderDetailBlock(title, text) {
       </section>`;
 }
 
+function renderLinkedDocs(linkedDocuments = [], options = {}) {
+  const readOnly = Boolean(options.readOnly);
+  const rows = linkedDocuments.length
+    ? linkedDocuments.map(doc => `
+        <div class="linked-doc" data-linked-doc-id="${escapeHtml(doc.id)}">
+          <button class="linked-doc__open" type="button" data-action="open-linked-doc" data-document-id="${escapeHtml(doc.id)}" data-document-context="${escapeHtml(doc.context)}">
+            <strong>${escapeHtml(doc.title || 'Untitled document')}</strong>
+            <small>${escapeHtml(labelFromValue(doc.documentType || 'note'))}</small>
+          </button>
+          ${readOnly ? '' : `<button class="linked-doc__unlink bracket-button bracket-button--quiet" type="button" data-action="unlink-document" data-document-id="${escapeHtml(doc.id)}" aria-label="Unlink ${escapeHtml(doc.title || 'document')}">[x]</button>`}
+        </div>`).join('')
+    : '<p class="linked-docs__empty">No linked runbooks or notes.</p>';
+
+  return `
+      <section class="detail-block">
+        <div class="detail-block__head">
+          <h3>Linked docs</h3>
+          ${readOnly ? '' : '<button class="bracket-button bracket-button--quiet" type="button" data-action="open-link-picker">[+] link doc</button>'}
+        </div>
+        <div class="linked-docs">${rows}</div>
+      </section>`;
+}
+
 function actionsFor(options) {
   const readOnly = Boolean(options.readOnly);
   const restoreAction = Boolean(options.restoreAction);
@@ -97,7 +120,7 @@ export function renderTaskDetailHtml(task, options = {}) {
       <dl class="detail-meta" aria-label="Task metadata">${renderMetaItem('Priority', priorityBadge)}${renderMetaItem('Status', escapeHtml(status))}${renderMetaItem('Due', escapeHtml(dueDate))}
       </dl>
 
-      <div class="detail-body">${renderDetailBlock('Checklist', 'Checklist items will be tracked here as execution details are added.')}${renderDetailBlock('Notes', 'Operational notes and handoff context will appear here.')}${renderDetailBlock('Activity', 'Task history will show recent changes when activity tracking is enabled.')}
+      <div class="detail-body">${renderLinkedDocs(options.linkedDocuments, options)}${renderDetailBlock('Checklist', 'Checklist items will be tracked here as execution details are added.')}${renderDetailBlock('Notes', 'Operational notes and handoff context will appear here.')}${renderDetailBlock('Activity', 'Task history will show recent changes when activity tracking is enabled.')}
       </div>
     </aside>`;
 }

@@ -4,10 +4,13 @@ import {
   createTask,
   deleteArchivedTask,
   exportTasks,
+  fetchTaskDocuments,
   fetchTasks,
   importTasks,
+  linkTaskDocument,
   reorderTasks,
   restoreTask,
+  unlinkTaskDocument,
   updateTask,
 } from './taskApi.js';
 import {
@@ -35,6 +38,7 @@ import { renderTaskFormHtml } from './renderTaskForm.js';
 import { renderAdminPanelHtml } from './renderAdminPanel.js';
 import { renderSettingsPanelHtml } from './renderSettingsPanel.js';
 import { renderDocumentFormHtml, renderLibraryHtml } from './renderLibrary.js';
+import { renderLinkPickerHtml } from './renderLinkPicker.js';
 import { titleFromMarkdown } from './markdownPreview.js';
 import { applyMarkdownFormat } from './markdownEditor.js';
 import { canPreserveEditorAfterDraftSave, documentDraftSavedPatch } from './documentDraftSave.js';
@@ -199,6 +203,16 @@ function applyMarkdownToolbarAction(textarea, action) {
   textarea.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
+async function loadTaskDocuments(taskId) {
+  if (!taskId) { setState({ taskDocuments: [] }); return; }
+  try {
+    const docs = await fetchTaskDocuments(taskId);
+    setState({ taskDocuments: docs });
+  } catch {
+    setState({ taskDocuments: [] });
+  }
+}
+
 function renderWorkspace() {
   const workspace = document.getElementById('workspace');
   if (!workspace) return;
@@ -215,17 +229,18 @@ function renderWorkspace() {
 
   workspace.innerHTML = [
     renderWorkspacePrimary(visibleTasks, selectedTaskId),
-    renderTaskDetailHtml(task, { readOnly, restoreAction: readOnly, deleteAction: readOnly, mobileDetailOpen: state.mobileDetailOpen }),
+    renderTaskDetailHtml(task, { readOnly, restoreAction: readOnly, deleteAction: readOnly, mobileDetailOpen: state.mobileDetailOpen, linkedDocuments: state.taskDocuments }),
   ].join('');
 
   workspace.classList.toggle('is-mobile-detail-open', Boolean(state.mobileDetailOpen));
 
   workspace.querySelectorAll('[data-task-id]').forEach((row) => {
-    row.addEventListener('click', () => {
+    row.addEventListener('click', async () => {
       setState({
         selectedTaskId: row.dataset.taskId,
         mobileDetailOpen: isMobile() ? true : state.mobileDetailOpen,
       });
+      await loadTaskDocuments(row.dataset.taskId);
       renderWorkspace();
     });
   });
@@ -295,6 +310,44 @@ function renderWorkspace() {
     } catch {
       window.alert('Moomora Console could not delete the archived task.');
     }
+  });
+
+  workspace.querySelector('[data-action="open-link-picker"]')?.addEventListener('click', async () => {
+    try {
+      const docs = await fetchDocuments({ archived: false });
+      setState({ linkPickerDocuments: docs, linkPickerQuery: '', isLinkPickerOpen: true });
+      renderApp();
+    } catch {
+      window.alert('Moomora Console could not load documents to link.');
+    }
+  });
+
+  workspace.querySelectorAll('[data-action="open-linked-doc"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const docId = btn.dataset.documentId;
+      const docContext = btn.dataset.documentContext || state.activeContext;
+      setState({ activeView: 'library', activeContext: docContext, selectedDocumentId: docId, mobileDetailOpen: false });
+      try {
+        await loadDocuments({ selectedDocumentId: docId });
+      } catch (error) {
+        setState({ apiStatus: 'error' });
+        renderError(error.message);
+      }
+    });
+  });
+
+  workspace.querySelectorAll('[data-action="unlink-document"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const taskId = state.selectedTaskId;
+      if (!taskId) return;
+      try {
+        const updated = await unlinkTaskDocument(taskId, btn.dataset.documentId);
+        setState({ taskDocuments: updated });
+        renderWorkspace();
+      } catch {
+        window.alert('Moomora Console could not unlink the document.');
+      }
+    });
   });
 }
 
@@ -1053,11 +1106,19 @@ function renderApp() {
       preferences: state.preferences,
     }));
   }
+  if (state.isLinkPickerOpen) {
+    app.insertAdjacentHTML('beforeend', renderLinkPickerHtml({
+      documents: state.linkPickerDocuments,
+      linkedIds: state.taskDocuments.map(d => d.id),
+      query: state.linkPickerQuery,
+    }));
+  }
   bindShellEvents();
   bindTaskFormEvents();
   bindDocumentFormEvents();
   bindAdminPanelEvents();
   bindSettingsPanelEvents();
+  bindLinkPickerEvents();
 }
 
 function bindShellEvents() {
@@ -1155,6 +1216,7 @@ function bindShellEvents() {
         isDrawerOpen: false,
         mobileDetailOpen: false,
         isLibraryDocOpen: false,
+        isLinkPickerOpen: false,
       });
       try {
         if (state.activeView === 'library') {
@@ -1199,6 +1261,7 @@ function bindShellEvents() {
         isDrawerOpen: false,
         mobileDetailOpen: false,
         isLibraryDocOpen: false,
+        isLinkPickerOpen: false,
       });
       if (nextView === 'library') {
         try {
@@ -1464,6 +1527,54 @@ function bindSettingsPanelEvents() {
   });
 }
 
+function bindLinkPickerEvents() {
+  const backdrop = app.querySelector('[data-link-picker]');
+  if (!backdrop) return;
+
+  backdrop.querySelectorAll('[data-action="close-link-picker"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setState({ isLinkPickerOpen: false });
+      renderApp();
+    });
+  });
+
+  backdrop.addEventListener('click', (event) => {
+    if (event.target === backdrop) {
+      setState({ isLinkPickerOpen: false });
+      renderApp();
+    }
+  });
+
+  const searchInput = backdrop.querySelector('[data-link-picker-search]');
+  searchInput?.addEventListener('input', (event) => {
+    setState({ linkPickerQuery: event.target.value });
+    renderApp();
+    const nextInput = app.querySelector('[data-link-picker-search]');
+    if (nextInput) {
+      nextInput.focus();
+      nextInput.setSelectionRange?.(nextInput.value.length, nextInput.value.length);
+    }
+  });
+
+  backdrop.querySelectorAll('[data-link-picker-doc]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const taskId = state.selectedTaskId;
+      if (!taskId) return;
+      const docId = btn.dataset.linkPickerDoc;
+      const isLinked = state.taskDocuments.some(d => d.id === docId);
+      try {
+        const updated = isLinked
+          ? await unlinkTaskDocument(taskId, docId)
+          : await linkTaskDocument(taskId, docId);
+        setState({ taskDocuments: updated });
+        renderApp();
+      } catch {
+        window.alert('Moomora Console could not update the document link.');
+      }
+    });
+  });
+}
+
 function bindTaskFormEvents() {
   const form = app.querySelector('[data-task-form]');
   if (!form) return;
@@ -1535,11 +1646,13 @@ async function loadTasks({ selectedTaskId = state.selectedTaskId } = {}) {
   });
   const normalizedTasks = tasks.map(normalizeTask);
   const selectedTaskExists = normalizedTasks.some((task) => task.id === selectedTaskId);
+  const resolvedTaskId = selectedTaskExists ? selectedTaskId : normalizedTasks[0]?.id || null;
   setState({
     tasks: normalizedTasks,
     apiStatus: 'connected',
-    selectedTaskId: selectedTaskExists ? selectedTaskId : normalizedTasks[0]?.id || null,
+    selectedTaskId: resolvedTaskId,
   });
+  await loadTaskDocuments(resolvedTaskId);
   renderApp();
 }
 

@@ -39,6 +39,10 @@ export const state = {
   libraryTypeFilter: 'all',
   librarySortBy: 'updated',
   libraryGroupByType: false,
+  taskDocuments: [],
+  isLinkPickerOpen: false,
+  linkPickerDocuments: [],
+  linkPickerQuery: '',
   preferences: { ...DEFAULT_PREFERENCES },
   boardOpenSections: { 'high-priority': true, 'in-progress': true, planned: false, completed: false, notes: false },
 };

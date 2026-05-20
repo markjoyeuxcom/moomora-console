@@ -27,3 +27,41 @@ test('detail omits back button when mobileDetailOpen is false', () => {
   const html = renderTaskDetailHtml(task, { mobileDetailOpen: false });
   assert.doesNotMatch(html, /data-action="close-mobile-detail"/);
 });
+
+test('linked docs renders rows with open and unlink controls', () => {
+  const task = { id: 'a', title: 'X', description: '', priority: 'medium', status: 'planned', dueDate: null };
+  const linkedDocuments = [
+    { id: 'doc-1', title: 'Deploy Runbook', documentType: 'runbook', context: 'homelab' },
+    { id: 'doc-2', title: 'Ops Note', documentType: 'note', context: 'work' },
+  ];
+  const html = renderTaskDetailHtml(task, { linkedDocuments });
+  assert.match(html, /data-action="open-linked-doc"[^>]*data-document-id="doc-1"/);
+  assert.match(html, /data-action="open-linked-doc"[^>]*data-document-id="doc-2"/);
+  assert.match(html, /data-action="unlink-document"[^>]*data-document-id="doc-1"/);
+  assert.match(html, /data-action="unlink-document"[^>]*data-document-id="doc-2"/);
+  assert.match(html, /Deploy Runbook/);
+  assert.match(html, /Ops Note/);
+});
+
+test('linked docs shows empty state when no documents are linked', () => {
+  const task = { id: 'a', title: 'X', description: '', priority: 'medium', status: 'planned', dueDate: null };
+  const html = renderTaskDetailHtml(task, { linkedDocuments: [] });
+  assert.match(html, /linked-docs__empty/);
+  assert.match(html, /No linked runbooks or notes/);
+});
+
+test('linked docs in read-only mode hides link and unlink controls', () => {
+  const task = { id: 'a', title: 'X', description: '', priority: 'medium', status: 'planned', dueDate: null };
+  const linkedDocuments = [{ id: 'doc-1', title: 'Runbook', documentType: 'runbook', context: 'homelab' }];
+  const html = renderTaskDetailHtml(task, { readOnly: true, linkedDocuments });
+  assert.doesNotMatch(html, /data-action="open-link-picker"/);
+  assert.doesNotMatch(html, /data-action="unlink-document"/);
+  assert.match(html, /data-action="open-linked-doc"/);
+});
+
+test('linked docs shows the link picker button when not read-only', () => {
+  const task = { id: 'a', title: 'X', description: '', priority: 'medium', status: 'planned', dueDate: null };
+  const html = renderTaskDetailHtml(task, { linkedDocuments: [] });
+  assert.match(html, /data-action="open-link-picker"/);
+  assert.match(html, /\[\+\] link doc/);
+});

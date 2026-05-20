@@ -53,3 +53,12 @@ create index if not exists idx_markdown_documents_archived_at on markdown_docume
 create index if not exists idx_markdown_documents_fts
   on markdown_documents
   using gin (to_tsvector('english', coalesce(title, '') || ' ' || coalesce(body, '')));
+
+create table if not exists task_documents (
+  task_id uuid not null references tasks(id) on delete cascade,
+  document_id uuid not null references markdown_documents(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (task_id, document_id)
+);
+
+create index if not exists idx_task_documents_document on task_documents (document_id);
