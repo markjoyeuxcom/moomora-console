@@ -67,7 +67,7 @@ function createMemoryProjectsRepository(projects) {
         name,
         slug,
         status,
-        sortOrder: projects.length,
+        sortOrder: projects.reduce((max, p) => Math.max(max, p.sortOrder), -1) + 1,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -94,9 +94,6 @@ function createMemoryProjectsRepository(projects) {
     },
 
     async countProjectDependents(id) {
-      // Access is via closure — tasksRef and documentsRef are not yet available here,
-      // so we expose a method that routes code can call; for the demo we return 0
-      // (demo doesn't enforce referential integrity on delete).
       return sharedProjectDependentCounter(id);
     },
 
@@ -155,33 +152,36 @@ function matchesArchived(item, archived) {
   return !item.archivedAt;
 }
 
+// Module-level so the project dependent counter can see tasks as well as docs.
+const sharedTasks = [
+  createTask({
+    title: 'Back up CNPG',
+    description: 'Verify backup schedule',
+    priority: 'high',
+    status: 'planned',
+    projectId: PROJECT_ID_HOMELAB,
+    dueDate: '2026-05-18',
+  }),
+  createTask({
+    title: 'Patch ingress',
+    description: 'Review controller release notes',
+    priority: 'medium',
+    status: 'in-progress',
+    projectId: PROJECT_ID_HOMELAB,
+  }),
+  createTask({
+    title: 'Inventory UPS batteries',
+    description: 'Backlog maintenance item',
+    priority: 'low',
+    status: 'planned',
+    projectId: PROJECT_ID_HOMELAB,
+    sortOrder: 1,
+  }),
+];
+
 function createMemoryTasksRepository(documentsRef) {
   const links = [];
-  const tasks = [
-    createTask({
-      title: 'Back up CNPG',
-      description: 'Verify backup schedule',
-      priority: 'high',
-      status: 'planned',
-      projectId: PROJECT_ID_HOMELAB,
-      dueDate: '2026-05-18',
-    }),
-    createTask({
-      title: 'Patch ingress',
-      description: 'Review controller release notes',
-      priority: 'medium',
-      status: 'in-progress',
-      projectId: PROJECT_ID_HOMELAB,
-    }),
-    createTask({
-      title: 'Inventory UPS batteries',
-      description: 'Backlog maintenance item',
-      priority: 'low',
-      status: 'planned',
-      projectId: PROJECT_ID_HOMELAB,
-      sortOrder: 1,
-    }),
-  ];
+  const tasks = sharedTasks;
 
   return {
     async listTasks(filters = {}) {
@@ -319,7 +319,9 @@ const sharedDocuments = [
 // so we only count documents from the demo perspective (good enough for demo).
 // ---------------------------------------------------------------------------
 function sharedProjectDependentCounter(projectId) {
-  return sharedDocuments.filter(d => d.projectId === projectId && !d.archivedAt).length;
+  const taskCount = sharedTasks.filter(t => t.projectId === projectId && !t.archivedAt).length;
+  const docCount = sharedDocuments.filter(d => d.projectId === projectId && !d.archivedAt).length;
+  return taskCount + docCount;
 }
 
 function createMemoryLibraryRepository(documents) {
