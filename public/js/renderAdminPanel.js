@@ -78,7 +78,7 @@ export function renderAdminPanelHtml({
               <legend>Import mode</legend>
               ${radioLine('skip', 'Skip duplicates', importMode)}
               ${radioLine('append', 'Append', importMode)}
-              ${radioLine('replace', 'Replace context', importMode)}
+              ${radioLine('replace', 'Replace project', importMode)}
             </fieldset>
             <label class="admin-input-row">
               <span>Replace confirmation</span>
