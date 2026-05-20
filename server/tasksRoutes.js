@@ -3,7 +3,9 @@ import { createProjectsRepository } from './projectsRepository.js';
 
 const PRIORITIES = new Set(['high', 'medium', 'low']);
 const STATUSES = new Set(['high-priority', 'in-progress', 'planned', 'completed', 'notes']);
-const PATCH_FIELDS = ['title', 'description', 'priority', 'status', 'project', 'projectId', 'dueDate', 'sortOrder'];
+// 'project' (slug-or-id) is the client-facing field; 'projectId' is resolved
+// server-side and injected into the patch by the handler — never accepted raw.
+const PATCH_FIELDS = ['title', 'description', 'priority', 'status', 'project', 'dueDate', 'sortOrder'];
 const IMPORT_MODES = new Set(['append', 'skip', 'replace']);
 const TASK_EXPORT_FORMAT = 'moomora.tasks';
 const MIN_SORT_ORDER = -2147483648;
@@ -267,10 +269,12 @@ export async function registerTasksRoutes(app, options = {}) {
     };
   });
 
-  app.get('/api/tasks', async request => {
-    const projectId = request.query.project && request.query.project !== 'all'
-      ? (await projectsRepository.resolveProject(String(request.query.project)))?.id
-      : undefined;
+  app.get('/api/tasks', async (request, reply) => {
+    let projectId;
+    if (request.query.project && request.query.project !== 'all') {
+      projectId = await resolveProjectId(request.query.project);
+      if (projectId === null) { reply.code(400); return { message: 'project is invalid' }; }
+    }
     return repository.listTasks({ ...request.query, projectId });
   });
 
@@ -428,13 +432,14 @@ export async function registerTasksRoutes(app, options = {}) {
       return { message: validationError };
     }
 
+    const fields = cleanTaskPatchPayload(request.body);
     if (Object.prototype.hasOwnProperty.call(request.body, 'project')) {
       const resolvedId = await resolveProjectId(request.body.project);
       if (resolvedId === null) { reply.code(400); return { message: 'project is invalid' }; }
-      request.body.projectId = resolvedId;
+      fields.projectId = resolvedId;
     }
 
-    const task = await repository.updateTask(request.params.id, cleanTaskPatchPayload(request.body));
+    const task = await repository.updateTask(request.params.id, fields);
     if (!task) {
       reply.code(404);
       return { message: 'task not found' };

@@ -201,6 +201,49 @@ test('GET /api/tasks?project=homelab filters by resolved projectId', async () =>
   await app.close();
 });
 
+test('GET /api/tasks?project=<unknown> returns 400 (not a cross-project query)', async () => {
+  let listed = false;
+  const repository = {
+    ...createFakeRepository(),
+    async listTasks() { listed = true; return []; },
+  };
+  const app = await buildApp({
+    skipDb: true,
+    tasksRepository: repository,
+    projectsRepository: createFakeProjectsRepository(),
+  });
+
+  const response = await app.inject({ method: 'GET', url: '/api/tasks?project=nope' });
+  assert.equal(response.statusCode, 400);
+  assert.equal(response.json().message, 'project is invalid');
+  assert.equal(listed, false);
+
+  await app.close();
+});
+
+test('PATCH /api/tasks/:id rejects a raw projectId (must use project slug-or-id)', async () => {
+  let updated = false;
+  const repository = {
+    ...createFakeRepository(),
+    async updateTask() { updated = true; return null; },
+  };
+  const app = await buildApp({
+    skipDb: true,
+    tasksRepository: repository,
+    projectsRepository: createFakeProjectsRepository(),
+  });
+
+  const response = await app.inject({
+    method: 'PATCH',
+    url: `/api/tasks/${TASK_ID}`,
+    payload: { projectId: PROJECT_UUID },
+  });
+  assert.equal(response.statusCode, 400);
+  assert.equal(updated, false);
+
+  await app.close();
+});
+
 test('GET /api/tasks/export returns a versioned project export', async () => {
   const app = await buildApp({
     skipDb: true,

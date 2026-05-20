@@ -230,7 +230,8 @@ export function createTasksRepository(db) {
     },
 
     async createTask(task) {
-      const result = await db.query(buildCreateTask(task).text, buildCreateTask(task).values);
+      const query = buildCreateTask(task);
+      const result = await db.query(query.text, query.values);
       return normalizeTaskRow(result.rows[0]);
     },
 
