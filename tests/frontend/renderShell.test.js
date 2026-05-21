@@ -284,3 +284,40 @@ test('hamburger drawer has inert when closed and not when open', () => {
   const open = renderShellHtml({ activeProject: 'all', projects: [], activeView: 'list', apiStatus: 'connected', searchQuery: '', metrics: {}, isDrawerOpen: true });
   assert.doesNotMatch(open, / inert/);
 });
+
+// ---------------------------------------------------------------------------
+// Task 1: Views topbar tab strip + slim sidebar
+// ---------------------------------------------------------------------------
+
+test('topbar contains a topbar-tabs nav', () => {
+  const html = renderShellHtml({
+    activeProject: 'all',
+    projects: [],
+    activeView: 'board',
+    metrics: {},
+  });
+  assert.match(html, /class="topbar-tabs"/);
+  assert.match(html, /topbar-tabs[\s\S]*data-view="board"/);
+});
+
+test('sidebar no longer has a Views label', () => {
+  const html = renderShellHtml({
+    activeProject: 'all',
+    projects: [],
+    activeView: 'list',
+    metrics: {},
+  });
+  assert.doesNotMatch(html, /nav-label">Views/);
+});
+
+test('sidebar still has projects nav with expected controls', () => {
+  const html = renderShellHtml({
+    activeProject: 'all',
+    projects: [{ id: 'p1', name: 'Homelab', slug: 'homelab', status: 'active' }],
+    activeView: 'list',
+    metrics: {},
+  });
+  assert.match(html, /data-project="all"/);
+  assert.match(html, /data-action="new-project"/);
+  assert.match(html, /data-action="open-project-manager"/);
+});

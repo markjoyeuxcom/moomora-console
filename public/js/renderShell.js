@@ -150,6 +150,8 @@ function renderViewButtons(activeView) {
 
 function renderProjectButtons(activeProject, projects) {
   const allActive = activeProject === 'all';
+  const newBtn = `
+          <button class="nav-button nav-button--accent" type="button" data-action="new-project"><span>[+] new project</span></button>`;
   const allBtn = `
           <button class="nav-button${allActive ? ' is-active' : ''}" type="button" aria-pressed="${allActive}" data-project="all">
             <span>All projects</span>
@@ -161,10 +163,9 @@ function renderProjectButtons(activeProject, projects) {
             <span>${escapeHtml(project.name)}</span>
           </button>`;
   }).join('');
-  const actionBtns = `
-          <button class="nav-button" type="button" data-action="new-project"><span>[+] new project</span></button>
-          <button class="nav-button" type="button" data-action="open-project-manager"><span>manage</span></button>`;
-  return allBtn + projectBtns + actionBtns;
+  const manageBtn = `
+          <button class="nav-button nav-button--quiet" type="button" data-action="open-project-manager"><span>manage</span></button>`;
+  return newBtn + allBtn + projectBtns + manageBtn;
 }
 
 function renderMetricCards(metrics) {
@@ -208,10 +209,6 @@ export function renderShellHtml({
           <span class="brand-name">Moomora Console</span>
         </div>
 
-        <nav class="side-nav" aria-label="Views">
-          <p class="nav-label">Views</p>${renderViewButtons(activeView)}
-        </nav>
-
         <nav class="side-nav" aria-label="Projects">
           <p class="nav-label">Projects</p>${renderProjectButtons(activeProject, projects)}
         </nav>
@@ -241,6 +238,7 @@ export function renderShellHtml({
       <main class="console-main${isLibraryView ? ' console-main--library' : ''}">
         <header class="topbar">
           <button class="hamburger-trigger" type="button" data-action="toggle-drawer" aria-label="Menu">≡</button>
+          <nav class="topbar-tabs" aria-label="Views">${renderViewButtons(activeView)}</nav>
           <label class="search-field">
             <span class="sr-only">${isLibraryView ? 'Search documents' : 'Search tasks'}</span>
             <input type="search" placeholder="${isLibraryView ? 'Search documents' : 'Search tasks'}" autocomplete="off" value="${escapeHtml(searchQuery)}" data-search-input>
