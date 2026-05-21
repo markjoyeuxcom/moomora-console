@@ -1999,6 +1999,7 @@ function bindTaskFormEvents() {
     const payload = {
       title,
       description: String(data.get('description') || '').trim(),
+      notes: String(data.get('notes') || '').trim(),
       priority: String(data.get('priority') || 'medium'),
       status: String(data.get('status') || 'planned'),
       project: String(data.get('project') || defaultProjectId()),
