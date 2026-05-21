@@ -3180,3 +3180,27 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
 .project-row__status { background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--text-body); padding: 6px 8px; }
 .project-row__actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .project-manager__empty { color: var(--text-dimmer); font-size: 0.85rem; padding: 6px 2px; list-style: none; }
+
+/* Topbar view tabs */
+.topbar-tabs { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.topbar-tabs .nav-button { padding: 5px 10px; }
+@media (max-width: 1023px) { .topbar-tabs { display: none; } } /* bottom-nav covers views on mobile */
+
+/* Sidebar project action variants */
+.nav-button--accent { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.nav-button--quiet { color: var(--text-dim); }
+
+/* Manage groups */
+.project-manager__groups { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.project-group { list-style: none; }
+.project-group__label { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem; color: var(--text-dimmer); margin: 4px 2px; }
+.project-manager__archive-link { width: 100%; margin-top: 12px; text-align: center; }
+
+/* Archive dialog */
+.project-archive { display: flex; flex-direction: column; gap: 10px; padding: 4px 2px; }
+.project-archive__error { margin: 0; padding: 8px 12px; border: 1px solid var(--accent-amber); border-radius: 6px; color: var(--accent-amber); font-size: 0.85rem; }
+.project-archive__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.archive-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; background: var(--bg-deep); }
+.archive-row__name { font-weight: 600; }
+.archive-row__actions { display: flex; gap: 6px; }
+.project-archive__empty { color: var(--text-dimmer); font-size: 0.85rem; padding: 6px 2px; list-style: none; }
