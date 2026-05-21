@@ -1102,7 +1102,10 @@ function renderWorkspacePrimary(visibleTasks, selectedTaskId) {
           projects: state.projects,
         });
     const toolbar = isAllProjects ? renderBoardToolbar(state.boardGrouping) : '';
-    return toolbar + board;
+    // Wrap in one element so the .workspace grid treats the board as a single
+    // primary cell — otherwise the prepended toolbar becomes a second grid item
+    // and the board spills into the detail column.
+    return `<div class="board-view">${toolbar}${board}</div>`;
   }
 
   return renderListHtml(visibleTasks, selectedTaskId, listOptionsForView(state.activeView));
