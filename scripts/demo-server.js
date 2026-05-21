@@ -404,8 +404,9 @@ function createMemoryLibraryRepository(documents) {
 
 function createMemoryChecklistRepository() {
   const items = [];
-  let seq = 0;
-  const nextId = () => `cl-${++seq}`;
+  // Item ids must be UUIDs so they pass the route layer's itemId validation,
+  // mirroring the real Postgres repository's gen_random_uuid() ids.
+  const nextId = () => randomUUID();
   return {
     async listChecklist(taskId) {
       return items.filter(i => i.taskId === taskId).sort((a, b) => a.sortOrder - b.sortOrder);
