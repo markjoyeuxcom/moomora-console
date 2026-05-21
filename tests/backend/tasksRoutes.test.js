@@ -856,6 +856,25 @@ test('PATCH /api/tasks/:id updates task with valid partial payload', async () =>
   await app.close();
 });
 
+test('PATCH /api/tasks/:id updates notes and round-trips the value', async () => {
+  const app = await buildApp({
+    skipDb: true,
+    tasksRepository: createFakeRepository(),
+    projectsRepository: createFakeProjectsRepository(),
+  });
+
+  const response = await app.inject({
+    method: 'PATCH',
+    url: `/api/tasks/${TASK_ID}`,
+    payload: { notes: 'remember to rotate creds' },
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().notes, 'remember to rotate creds');
+
+  await app.close();
+});
+
 test('PATCH /api/tasks/:id with project slug resolves to projectId', async () => {
   const calls = [];
   const repository = {

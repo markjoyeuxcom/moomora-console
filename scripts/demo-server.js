@@ -120,6 +120,7 @@ function createTask(seed) {
     id: randomUUID(),
     title: seed.title,
     description: seed.description || '',
+    notes: seed.notes || '',
     priority: seed.priority || 'medium',
     status: seed.status || 'planned',
     projectId: seed.projectId || PROJECT_ID_HOMELAB,
