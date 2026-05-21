@@ -1,4 +1,4 @@
-const ALLOWED_CREATE_FIELDS = ['title', 'description', 'priority', 'status', 'projectId', 'dueDate', 'sortOrder'];
+const ALLOWED_CREATE_FIELDS = ['title', 'description', 'priority', 'status', 'projectId', 'dueDate', 'sortOrder', 'notes'];
 const IMPORT_FIELDS = ['title', 'description', 'priority', 'status', 'projectId', 'dueDate', 'sortOrder', 'archivedAt'];
 const UPDATE_COLUMN_MAP = {
   title: 'title',
@@ -8,6 +8,7 @@ const UPDATE_COLUMN_MAP = {
   projectId: 'project_id',
   dueDate: 'due_date',
   sortOrder: 'sort_order',
+  notes: 'notes',
 };
 
 // pg returns DATE columns as JS Date objects (serialised as full ISO datetimes
@@ -24,6 +25,7 @@ export function normalizeTaskRow(row) {
     id: row.id,
     title: row.title,
     description: row.description,
+    notes: row.notes,
     priority: row.priority,
     status: row.status,
     projectId: row.project_id,
@@ -38,8 +40,8 @@ export function normalizeTaskRow(row) {
 export function buildCreateTask(task) {
   return {
     text: `
-      insert into tasks (title, description, priority, status, project_id, due_date, sort_order)
-      values ($1, $2, $3, $4, $5, $6, $7)
+      insert into tasks (title, description, priority, status, project_id, due_date, sort_order, notes)
+      values ($1, $2, $3, $4, $5, $6, $7, $8)
       returning *
     `,
     values: ALLOWED_CREATE_FIELDS.map(field => task[field] ?? null),

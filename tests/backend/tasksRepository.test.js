@@ -23,6 +23,7 @@ test('normalizeTaskRow maps database fields to API task fields', () => {
     id: '11111111-1111-4111-8111-111111111111',
     title: 'Back up CloudNativePG',
     description: 'Verify backup schedule',
+    notes: 'Confirm the off-site copy completed.',
     priority: 'high',
     status: 'planned',
     project_id: PROJECT_ID,
@@ -37,6 +38,7 @@ test('normalizeTaskRow maps database fields to API task fields', () => {
     id: '11111111-1111-4111-8111-111111111111',
     title: 'Back up CloudNativePG',
     description: 'Verify backup schedule',
+    notes: 'Confirm the off-site copy completed.',
     priority: 'high',
     status: 'planned',
     projectId: PROJECT_ID,
@@ -79,8 +81,14 @@ test('buildCreateTask returns parameterized insert query', () => {
   });
 
   assert.match(query.text, /insert into tasks/);
-  assert.equal(query.values.length, 7);
+  assert.equal(query.values.length, 8);
   assert.equal(query.values[0], 'Wire API adapter');
+});
+
+test('buildUpdateTask maps notes to the notes column', () => {
+  const q = buildUpdateTask('11111111-1111-4111-8111-111111111111', { notes: 'Handoff: paused on step 3.' });
+  assert.match(q.text, /notes = \$2/);
+  assert.deepEqual(q.values, ['11111111-1111-4111-8111-111111111111', 'Handoff: paused on step 3.']);
 });
 
 test('buildUpdateTask rejects empty updates', () => {
