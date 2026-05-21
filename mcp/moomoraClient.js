@@ -124,5 +124,8 @@ export function createMoomoraClient({
 
     deleteChecklistItem: (taskId, itemId) =>
       request('DELETE', `/api/tasks/${taskId}/checklist/${itemId}`, {}),
+
+    listTaskActivity: (taskId) =>
+      request('GET', `/api/tasks/${taskId}/activity`, {}),
   };
 }
