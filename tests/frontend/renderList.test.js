@@ -229,3 +229,14 @@ test('renderSwimlaneListHtml escapes the project name in the lane header', () =>
   assert.match(html, /&lt;b&gt;&quot;Home&quot;&lt;\/b&gt;/);
   assert.doesNotMatch(html, /<b>"Home"<\/b>/);
 });
+
+test('renderListToolbar marks flat as active by default', () => {
+  const html = renderListToolbar();
+  assert.match(html, /data-grouping="flat"[^>]*aria-pressed="true"/);
+  assert.match(html, /data-grouping="swimlanes"[^>]*aria-pressed="false"/);
+});
+
+test('renderListHtml renders a provided toolbar in the panel header', () => {
+  const html = renderListHtml([], null, { toolbar: '<div class="list-toolbar">TOGGLE</div>' });
+  assert.match(html, /<header class="panel-header">[\s\S]*list-toolbar[\s\S]*<\/header>/);
+});

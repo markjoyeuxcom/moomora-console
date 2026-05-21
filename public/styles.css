@@ -3350,6 +3350,7 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
 .task-lane { border-bottom: 1px solid var(--border); }
 .task-lane:last-child { border-bottom: 0; }
 .task-lane__header { background: var(--surface-warm); }
+.task-lane--collapsed .task-lane__header { border-bottom: 0; }
 .task-lane__toggle { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 14px; background: transparent; border: 0; color: var(--text); cursor: pointer; text-align: left; }
 .task-lane__glyph { color: var(--text-dim); }
 .task-lane__name { font-family: var(--font-mono); font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; }
