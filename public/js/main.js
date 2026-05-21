@@ -1067,7 +1067,12 @@ function listOptionsForView(activeView) {
 
 function renderWorkspacePrimary(visibleTasks, selectedTaskId) {
   if (state.activeView === 'board') {
-    return renderBoardHtml(visibleTasks, selectedTaskId, { boardOpenSections: state.boardOpenSections });
+    return renderBoardHtml(visibleTasks, selectedTaskId, {
+      boardOpenSections: state.boardOpenSections,
+      today: today(),
+      showProjectChips: state.activeProject === 'all',
+      projects: state.projects,
+    });
   }
 
   return renderListHtml(visibleTasks, selectedTaskId, listOptionsForView(state.activeView));
