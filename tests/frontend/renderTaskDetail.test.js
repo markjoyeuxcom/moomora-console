@@ -92,3 +92,29 @@ test('renderNotes escapes HTML-special characters in notes', () => {
   assert.doesNotMatch(html, /<script>/);
   assert.match(html, /&lt;\/textarea&gt;/);
 });
+
+test('renderTaskDetailHtml renders checklist items with a done count and controls', () => {
+  const html = renderTaskDetailHtml(
+    { id: 't1', title: 'X', status: 'planned', priority: 'low' },
+    { checklistItems: [
+      { id: 'c1', label: 'Step one', completed: true },
+      { id: 'c2', label: 'Step two', completed: false },
+    ] },
+  );
+  assert.match(html, /Checklist/);
+  assert.match(html, /1\/2/);
+  assert.match(html, /data-action="toggle-checklist-item"[^>]*data-item-id="c1"/);
+  assert.match(html, /data-action="delete-checklist-item"[^>]*data-item-id="c2"/);
+  assert.match(html, /data-action="add-checklist-item"/);
+  assert.match(html, /Step one/);
+});
+
+test('renderTaskDetailHtml checklist is read-only with no controls when readOnly', () => {
+  const html = renderTaskDetailHtml(
+    { id: 't1', title: 'X', status: 'completed', priority: 'low' },
+    { readOnly: true, checklistItems: [{ id: 'c1', label: 'Done step', completed: true }] },
+  );
+  assert.match(html, /Done step/);
+  assert.doesNotMatch(html, /data-action="toggle-checklist-item"/);
+  assert.doesNotMatch(html, /data-action="add-checklist-item"/);
+});

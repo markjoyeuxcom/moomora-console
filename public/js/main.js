@@ -3,16 +3,20 @@ import { fetchProjects, createProject, updateProject, archiveProject, deleteProj
 import { renderProjectManagerHtml } from './renderProjectManager.js';
 import { renderProjectArchiveHtml } from './renderProjectArchive.js';
 import {
+  addChecklistItem,
   archiveTask,
   createTask,
   deleteArchivedTask,
+  deleteChecklistItem,
   exportTasks,
+  fetchTaskChecklist,
   fetchTaskDocuments,
   fetchTasks,
   importTasks,
   linkTaskDocument,
   reorderTasks,
   restoreTask,
+  setChecklistItem,
   unlinkTaskDocument,
   updateTask,
 } from './taskApi.js';
@@ -219,6 +223,17 @@ async function loadTaskDocuments(taskId) {
   }
 }
 
+async function loadTaskChecklist(taskId) {
+  if (!taskId) { setState({ taskChecklist: [] }); return; }
+  const requestedTaskId = taskId;
+  try {
+    const items = await fetchTaskChecklist(taskId);
+    if (state.selectedTaskId === requestedTaskId) setState({ taskChecklist: items });
+  } catch {
+    if (state.selectedTaskId === requestedTaskId) setState({ taskChecklist: [] });
+  }
+}
+
 function renderWorkspace() {
   const workspace = document.getElementById('workspace');
   if (!workspace) return;
@@ -235,7 +250,7 @@ function renderWorkspace() {
 
   workspace.innerHTML = [
     renderWorkspacePrimary(visibleTasks, selectedTaskId),
-    renderTaskDetailHtml(task, { readOnly, restoreAction: readOnly, deleteAction: readOnly, mobileDetailOpen: state.mobileDetailOpen, linkedDocuments: state.taskDocuments }),
+    renderTaskDetailHtml(task, { readOnly, restoreAction: readOnly, deleteAction: readOnly, mobileDetailOpen: state.mobileDetailOpen, linkedDocuments: state.taskDocuments, checklistItems: state.taskChecklist }),
   ].join('');
 
   workspace.classList.toggle('is-mobile-detail-open', Boolean(state.mobileDetailOpen));
@@ -247,6 +262,7 @@ function renderWorkspace() {
         mobileDetailOpen: isMobile() ? true : state.mobileDetailOpen,
       });
       await loadTaskDocuments(row.dataset.taskId);
+      await loadTaskChecklist(row.dataset.taskId);
       renderWorkspace();
     });
   });
@@ -367,6 +383,43 @@ function renderWorkspace() {
     } catch {
       window.alert('Moomora Console could not save notes.');
     }
+  });
+
+  workspace.querySelector('[data-action="add-checklist-item"]')?.addEventListener('click', async () => {
+    const input = workspace.querySelector('[data-checklist-new]');
+    const label = input?.value.trim();
+    if (!label) return;
+    try {
+      await addChecklistItem(state.selectedTaskId, label);
+      await loadTaskChecklist(state.selectedTaskId);
+      renderWorkspace();
+    } catch {
+      window.alert('Moomora Console could not add the checklist item.');
+    }
+  });
+
+  workspace.querySelectorAll('[data-action="toggle-checklist-item"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        await setChecklistItem(state.selectedTaskId, btn.dataset.itemId, btn.dataset.completed !== 'true');
+        await loadTaskChecklist(state.selectedTaskId);
+        renderWorkspace();
+      } catch {
+        window.alert('Moomora Console could not update the checklist item.');
+      }
+    });
+  });
+
+  workspace.querySelectorAll('[data-action="delete-checklist-item"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        await deleteChecklistItem(state.selectedTaskId, btn.dataset.itemId);
+        await loadTaskChecklist(state.selectedTaskId);
+        renderWorkspace();
+      } catch {
+        window.alert('Moomora Console could not delete the checklist item.');
+      }
+    });
   });
 }
 
@@ -1980,6 +2033,7 @@ async function loadTasks({ selectedTaskId = state.selectedTaskId } = {}) {
     selectedTaskId: resolvedTaskId,
   });
   await loadTaskDocuments(resolvedTaskId);
+  await loadTaskChecklist(resolvedTaskId);
   renderApp();
 }
 

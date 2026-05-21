@@ -68,6 +68,34 @@ function renderLinkedDocs(linkedDocuments = [], options = {}) {
       </section>`;
 }
 
+function renderChecklist(items = [], options = {}) {
+  const readOnly = Boolean(options.readOnly);
+  const done = items.filter(i => i.completed).length;
+  const rows = items.length
+    ? items.map(item => `
+        <div class="checklist-item${item.completed ? ' is-done' : ''}" data-checklist-id="${escapeHtml(item.id)}">
+          ${readOnly
+            ? `<span class="checklist-item__mark">${item.completed ? '[x]' : '[ ]'}</span>`
+            : `<button class="checklist-item__toggle bracket-button bracket-button--quiet" type="button" data-action="toggle-checklist-item" data-item-id="${escapeHtml(item.id)}" data-completed="${item.completed ? 'true' : 'false'}" aria-label="Toggle">${item.completed ? '[x]' : '[ ]'}</button>`}
+          <span class="checklist-item__label">${escapeHtml(item.label || '')}</span>
+          ${readOnly ? '' : `<button class="checklist-item__delete bracket-button bracket-button--quiet" type="button" data-action="delete-checklist-item" data-item-id="${escapeHtml(item.id)}" aria-label="Delete">[x]</button>`}
+        </div>`).join('')
+    : '<p class="checklist__empty">No checklist items.</p>';
+  const adder = readOnly ? '' : `
+        <div class="checklist-add">
+          <input type="text" class="checklist-add__input" data-checklist-new placeholder="Add a checklist item" autocomplete="off">
+          <button class="bracket-button bracket-button--quiet" type="button" data-action="add-checklist-item">[+] add</button>
+        </div>`;
+  return `
+      <section class="detail-block">
+        <div class="detail-block__head">
+          <h3>Checklist</h3>
+          <span class="detail-block__count">${done}/${items.length}</span>
+        </div>
+        <div class="checklist">${rows}</div>${adder}
+      </section>`;
+}
+
 function renderNotes(task, options = {}) {
   const readOnly = Boolean(options.readOnly);
   const notes = task.notes || '';
@@ -140,7 +168,7 @@ export function renderTaskDetailHtml(task, options = {}) {
       <dl class="detail-meta" aria-label="Task metadata">${renderMetaItem('Priority', priorityBadge)}${renderMetaItem('Status', escapeHtml(status))}${renderMetaItem('Due', escapeHtml(dueDate))}
       </dl>
 
-      <div class="detail-body">${renderLinkedDocs(options.linkedDocuments, options)}${renderDetailBlock('Checklist', 'Checklist items will be tracked here as execution details are added.')}${renderNotes(task, options)}${renderDetailBlock('Activity', 'Task history will show recent changes when activity tracking is enabled.')}
+      <div class="detail-body">${renderLinkedDocs(options.linkedDocuments, options)}${renderChecklist(options.checklistItems, options)}${renderNotes(task, options)}${renderDetailBlock('Activity', 'Task history will show recent changes when activity tracking is enabled.')}
       </div>
     </aside>`;
 }
