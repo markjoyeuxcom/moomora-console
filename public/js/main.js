@@ -1,4 +1,4 @@
-import { state, setState, loadActiveProject, persistActiveProject } from './state.js';
+import { state, setState, loadActiveProject, persistActiveProject, loadBoardGrouping, persistBoardGrouping } from './state.js';
 import { fetchProjects, createProject, updateProject, archiveProject, deleteProjectPermanent } from './projectApi.js';
 import { renderProjectManagerHtml } from './renderProjectManager.js';
 import { renderProjectArchiveHtml } from './renderProjectArchive.js';
@@ -35,7 +35,7 @@ import { buildMetrics, normalizeTask } from './taskModel.js';
 import { isArchiveView, tasksForView } from './taskViews.js';
 import { renderShellHtml } from './renderShell.js';
 import { renderListHtml } from './renderList.js';
-import { renderBoardHtml } from './renderBoard.js';
+import { renderBoardHtml, renderSwimlaneBoardHtml, renderBoardToolbar } from './renderBoard.js';
 import { renderTaskDetailHtml } from './renderTaskDetail.js';
 import { renderTaskFormHtml } from './renderTaskForm.js';
 import { renderAdminPanelHtml } from './renderAdminPanel.js';
@@ -1008,6 +1008,24 @@ function bindBoardEvents(workspace) {
       renderWorkspace();
     });
   });
+
+  workspace.querySelectorAll('[data-action="set-board-grouping"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const grouping = btn.dataset.grouping === 'swimlanes' ? 'swimlanes' : 'flat';
+      persistBoardGrouping(grouping);
+      setState({ boardGrouping: grouping });
+      renderWorkspace();
+    });
+  });
+
+  workspace.querySelectorAll('[data-action="toggle-board-lane"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.projectId;
+      if (!id) return;
+      setState({ boardLaneCollapsed: { ...state.boardLaneCollapsed, [id]: state.boardLaneCollapsed[id] !== true } });
+      renderWorkspace();
+    });
+  });
 }
 
 async function handleBoardDrop({ taskId, targetStatus, beforeTaskId }) {
@@ -1067,12 +1085,21 @@ function listOptionsForView(activeView) {
 
 function renderWorkspacePrimary(visibleTasks, selectedTaskId) {
   if (state.activeView === 'board') {
-    return renderBoardHtml(visibleTasks, selectedTaskId, {
-      boardOpenSections: state.boardOpenSections,
-      today: today(),
-      showProjectChips: state.activeProject === 'all',
-      projects: state.projects,
-    });
+    const useSwimlanes = state.boardGrouping === 'swimlanes' && state.activeProject === 'all';
+    const board = useSwimlanes
+      ? renderSwimlaneBoardHtml(visibleTasks, selectedTaskId, {
+          today: today(),
+          projects: state.projects,
+          boardLaneCollapsed: state.boardLaneCollapsed,
+        })
+      : renderBoardHtml(visibleTasks, selectedTaskId, {
+          boardOpenSections: state.boardOpenSections,
+          today: today(),
+          showProjectChips: state.activeProject === 'all',
+          projects: state.projects,
+        });
+    const toolbar = state.activeProject === 'all' ? renderBoardToolbar(state.boardGrouping) : '';
+    return toolbar + board;
   }
 
   return renderListHtml(visibleTasks, selectedTaskId, listOptionsForView(state.activeView));
@@ -1960,6 +1987,7 @@ async function init() {
     const preferences = applyPreferences(loadPreferences());
     setState({
       preferences,
+      boardGrouping: loadBoardGrouping(),
       librarySavedViews: savedLibraryViewsFromJson(window.localStorage?.getItem(SAVED_LIBRARY_VIEWS_KEY)),
       ...loadLibraryControls(),
     });
