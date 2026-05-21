@@ -150,7 +150,7 @@ export function renderSwimlaneBoardHtml(tasks = [], selectedTaskId = null, optio
         return `
         <section class="board-lane" data-board-lane="${escapeHtml(project.id)}">
           <header class="board-lane__header">
-            <button class="board-lane__toggle" type="button" data-action="toggle-board-lane" data-project-id="${escapeHtml(project.id)}" aria-expanded="${!isCollapsed}">
+            <button class="board-lane__toggle" type="button" data-action="toggle-board-lane" data-project-id="${escapeHtml(project.id)}" aria-label="Toggle ${escapeHtml(project.name)}" aria-expanded="${!isCollapsed}">
               <span class="board-lane__glyph">${isCollapsed ? '▸' : '▾'}</span>
               <span class="board-lane__name">${escapeHtml(project.name)}</span>
               <span class="board-lane__count">· ${laneTasks.length}</span>
