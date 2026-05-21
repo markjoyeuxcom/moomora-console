@@ -71,6 +71,25 @@
   --modal-backdrop: rgba(31, 35, 40, 0.5);
 }
 
+:root[data-palette="midnight"] {
+  --bg: #0e1116;
+  --bg-deep: #0a0c10;
+  --surface: #161b22;
+  --surface-warm: #1a2029;
+  --border: #283040;
+  --border-dim: #1e2530;
+  --text: #e6edf3;
+  --text-body: #c9d4e0;
+  --text-dim: #7b8794;
+  --text-dimmer: #586573;
+  --accent: #7aa2ff;
+  --accent-amber: #d6a13a;
+  --accent-cyan: #79c0ff;
+  --danger: #e0746a;
+  --caret: #cdd9e5;
+  --modal-backdrop: rgba(1, 4, 9, 0.78);
+}
+
 /* ============================================================
    Base reset
    ============================================================ */
@@ -2235,10 +2254,9 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
 /* ============================================================
    Settings panel (preferences feature)
    Mirrors admin-modal patterns: outer frame, section cards,
-   nav rail. Note: selecting a palette saves the preference but
-   the operator stylesheet doesn't honor :root[data-palette=...]
-   tokens — palette switching is a no-op until the redesign and
-   preferences are integrated.
+   nav rail. Palette switching is live: applyPreferences sets
+   :root[data-palette=...] and the token blocks above
+   (console / graphite / daylight / midnight) override the theme.
    ============================================================ */
 .settings-modal {
   width: min(760px, 100%);
@@ -2411,6 +2429,13 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
     #ffffff 0 33.33%,
     #2563eb 33.33% 66.66%,
     #f59e0b 66.66% 100%);
+}
+
+.settings-palette__swatches--midnight {
+  background: linear-gradient(to right,
+    #0e1116 0 33.33%,
+    #7aa2ff 33.33% 66.66%,
+    #d6a13a 66.66% 100%);
 }
 
 .settings-palette__name {
