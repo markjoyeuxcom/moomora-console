@@ -890,6 +890,7 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
 
 .board-cards {
   display: grid;
+  align-content: start;
   gap: 8px;
   min-height: 200px;
   padding: 8px;
