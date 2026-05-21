@@ -1053,7 +1053,7 @@ function listOptionsForView(activeView) {
       title: 'Archived Tasks',
       countLabel: 'archived tasks',
       emptyTitle: 'No archived tasks',
-      emptyDescription: 'Archived work for this context will appear here.',
+      emptyDescription: 'Archived work will appear here.',
     };
   }
   return {

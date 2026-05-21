@@ -27,7 +27,7 @@ const viewButtons = [
     id: 'library',
     label: 'Library',
     heading: 'Library',
-    description: 'Markdown runbooks and notes for personal, work, and homelab operations.',
+    description: 'Markdown runbooks and notes across your projects.',
   },
 ];
 
