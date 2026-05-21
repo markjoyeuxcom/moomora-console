@@ -875,6 +875,25 @@ test('PATCH /api/tasks/:id updates notes and round-trips the value', async () =>
   await app.close();
 });
 
+test('POST /api/tasks persists an initial notes value', async () => {
+  const app = await buildApp({
+    skipDb: true,
+    tasksRepository: createFakeRepository(),
+    projectsRepository: createFakeProjectsRepository(),
+  });
+
+  const response = await app.inject({
+    method: 'POST',
+    url: '/api/tasks',
+    payload: { title: 'T', project: 'homelab', priority: 'low', status: 'planned', notes: 'kick-off note' },
+  });
+
+  assert.equal(response.statusCode, 201);
+  assert.equal(response.json().notes, 'kick-off note');
+
+  await app.close();
+});
+
 test('PATCH /api/tasks/:id with project slug resolves to projectId', async () => {
   const calls = [];
   const repository = {

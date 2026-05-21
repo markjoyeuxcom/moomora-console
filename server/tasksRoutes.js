@@ -128,6 +128,7 @@ function cleanTaskPayload(payload) {
   return {
     title: payload.title.trim(),
     description: typeof payload.description === 'string' ? payload.description.trim() : '',
+    notes: typeof payload.notes === 'string' ? payload.notes.trim() : '',
     priority: payload.priority,
     status: payload.status,
     projectId: payload.projectId,
