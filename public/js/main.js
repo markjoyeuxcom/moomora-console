@@ -1625,7 +1625,11 @@ function bindProjectManagerEvents() {
   });
 
   const move = async (id, direction) => {
-    const ordered = [...state.managedProjects].sort((a, b) => a.sortOrder - b.sortOrder);
+    // Only live projects are shown in the manager, so reorder must ignore
+    // archived rows — otherwise move up/down can swap with a hidden project.
+    const ordered = state.managedProjects
+      .filter((p) => p.status !== 'archived')
+      .sort((a, b) => a.sortOrder - b.sortOrder);
     const index = ordered.findIndex((p) => p.id === id);
     const swapIndex = direction === 'up' ? index - 1 : index + 1;
     if (index < 0 || swapIndex < 0 || swapIndex >= ordered.length) return;

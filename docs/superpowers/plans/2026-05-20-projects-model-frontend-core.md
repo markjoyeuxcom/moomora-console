@@ -272,7 +272,7 @@ EOF
 
 - [ ] **Step 1: Update `tests/frontend/renderShell.test.js`**
 
-Read the file. Replace context-nav assertions with project-nav ones. The render call now passes `activeProject` and `projects`. Add/ချchange tests to assert:
+Read the file. Replace context-nav assertions with project-nav ones. The render call now passes `activeProject` and `projects`. Add/change tests to assert:
 - Calling `renderShellHtml({ activeProject: 'all', projects: [{ id: 'p1', name: 'Homelab', slug: 'homelab', status: 'active' }] })` produces an "All projects" control with `data-project="all"` marked active, and a `data-project="p1"` button labelled "Homelab".
 - A `[+] new project` control with `data-action="new-project"` and a `data-action="open-project-manager"` control are present.
 - When `activeProject: 'p1'`, the `data-project="p1"` button is active and the breadcrumb shows "Homelab".

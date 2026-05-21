@@ -45,6 +45,20 @@ test('renderTaskFormHtml renders edit values and selected options', () => {
   assert.match(html, /value="2026-05-17"/);
 });
 
+test('renderTaskFormHtml falls back to the task project when no override is given', () => {
+  const html = renderTaskFormHtml({
+    task: {
+      title: 'Patch NAS',
+      priority: 'high',
+      status: 'in-progress',
+      projectId: 'p2',
+    },
+    projects: TEST_PROJECTS,
+  });
+
+  assert.match(html, /name="project"[\s\S]*value="p2" selected/);
+});
+
 test('renderTaskFormHtml escapes task values and shows errors', () => {
   const html = renderTaskFormHtml({
     task: {

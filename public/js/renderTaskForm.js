@@ -39,7 +39,7 @@ export function renderTaskFormHtml({
     description: task?.description || '',
     priority: task?.priority || 'medium',
     status: task?.status || 'planned',
-    project: valuesOverride.project || '',
+    project: valuesOverride.project || task?.projectId || '',
     dueDate: task?.dueDate || '',
   };
 

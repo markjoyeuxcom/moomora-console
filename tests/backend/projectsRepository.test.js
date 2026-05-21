@@ -32,9 +32,11 @@ test('buildListProjects filters by status when provided', () => {
   assert.deepEqual(active.values, ['active']);
 });
 
-test('buildCreateProject inserts name, slug, status', () => {
+test('buildCreateProject inserts name, slug, status and a unique trailing sort_order', () => {
   const q = buildCreateProject({ name: 'Work', slug: 'work', status: 'active' });
   assert.match(q.text, /insert into projects/);
+  // New projects land at the end with a distinct sort_order so reorder swaps work.
+  assert.match(q.text, /coalesce\(max\(sort_order\), -1\) \+ 1/);
   assert.deepEqual(q.values, ['Work', 'work', 'active']);
 });
 

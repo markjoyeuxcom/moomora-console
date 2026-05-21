@@ -57,14 +57,21 @@ export function buildImportTasks(tasks) {
   };
 }
 
+// Fields written per imported row, excluding project_id — a replace import
+// always belongs to the target project ($1), so we never trust the row's own
+// projectId (a row missing it must not land in some default project).
+const REPLACE_FIELDS = IMPORT_FIELDS.filter(field => field !== 'projectId');
+
 export function buildReplaceProjectTasks(projectId, tasks) {
   if (!Array.isArray(tasks) || tasks.length === 0) {
     throw new Error('No task import records provided');
   }
 
   const rows = tasks.map((_, rowIndex) => {
-    const offset = 2 + (rowIndex * IMPORT_FIELDS.length);
-    return `($${offset}, $${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7})`;
+    const offset = 2 + (rowIndex * REPLACE_FIELDS.length);
+    // Column order: title, description, priority, status, project_id, due_date, sort_order, archived_at.
+    // project_id is fixed to $1 (the target project); the other 7 columns are per-row placeholders.
+    return `($${offset}, $${offset + 1}, $${offset + 2}, $${offset + 3}, $1, $${offset + 4}, $${offset + 5}, $${offset + 6})`;
   });
 
   return {
@@ -77,7 +84,7 @@ export function buildReplaceProjectTasks(projectId, tasks) {
       values ${rows.join(', ')}
       returning *
     `,
-    values: [projectId, ...tasks.flatMap(task => IMPORT_FIELDS.map(field => task[field] ?? null))],
+    values: [projectId, ...tasks.flatMap(task => REPLACE_FIELDS.map(field => task[field] ?? null))],
   };
 }
 

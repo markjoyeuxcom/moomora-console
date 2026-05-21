@@ -189,17 +189,31 @@ test('buildReplaceProjectTasks deletes one project and inserts imported tasks', 
   assert.match(query.text, /where project_id = \$1/);
   assert.match(query.text, /insert into tasks/);
   assert.match(query.text, /returning \*/);
+  // project_id is bound to $1 (the target project), not a per-row value, so the
+  // values array carries the target id once followed by the 7 other columns.
   assert.deepEqual(query.values, [
     PROJECT_ID,
     'Imported task',
     '',
     'medium',
     'planned',
-    PROJECT_ID,
     null,
     0,
     null,
   ]);
+});
+
+test('buildReplaceProjectTasks forces every row into the target project', () => {
+  const OTHER_PROJECT = '11111111-1111-4111-8111-111111111111';
+  const query = buildReplaceProjectTasks(PROJECT_ID, [
+    { title: 'Wrong project', projectId: OTHER_PROJECT },
+    { title: 'No project' },
+  ]);
+
+  // Both rows must bind project_id to $1; the stray/absent projectId is ignored.
+  assert.match(query.text, /\$1, \$\d+, \$\d+, \$\d+\)/);
+  assert.ok(!query.values.includes(OTHER_PROJECT));
+  assert.equal(query.values.filter(value => value === PROJECT_ID).length, 1);
 });
 
 test('listTasks filters active tasks by default', async () => {

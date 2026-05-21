@@ -210,7 +210,9 @@ function createMemoryTasksRepository(documentsRef) {
       for (let index = tasks.length - 1; index >= 0; index -= 1) {
         if (tasks[index].projectId === projectId) tasks.splice(index, 1);
       }
-      return this.importTasks(importedTasks);
+      // A replace import targets one project, so force every imported row into
+      // it — otherwise rows missing projectId would default to Homelab.
+      return this.importTasks(importedTasks.map((task) => ({ ...task, projectId })));
     },
     async updateTask(id, fields) {
       const task = tasks.find(item => item.id === id && !item.archivedAt);

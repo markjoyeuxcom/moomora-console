@@ -31,8 +31,8 @@ export function buildListProjects(status) {
 export function buildCreateProject({ name, slug, status = 'active' }) {
   return {
     text: `
-      insert into projects (name, slug, status)
-      values ($1, $2, $3)
+      insert into projects (name, slug, status, sort_order)
+      values ($1, $2, $3, (select coalesce(max(sort_order), -1) + 1 from projects))
       returning *
     `,
     values: [name, slug, status],

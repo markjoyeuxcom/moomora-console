@@ -11,7 +11,7 @@ export function createDocumentTools(client) {
       name: 'search_documents',
       title: 'Search documents',
       description:
-        'Full-text search the Moomora library. Returns lightweight references (id, title, type, project, tags, snippet) without bodies. Call get_document to read a full document.',
+        'Full-text search the Moomora library. Returns lightweight references (id, title, type, projectId, tags, snippet) without bodies. Call get_document to read a full document.',
       annotations: { readOnlyHint: true },
       inputSchema: {
         query: z.string().optional().describe('Search text matched against title, body, and tags. Omit to browse by project/tags alone.'),
