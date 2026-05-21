@@ -3208,7 +3208,7 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
 
 /* Topbar view tabs */
 .topbar-tabs { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
-.topbar-tabs .nav-button { padding: 5px 10px; }
+.topbar-tabs .nav-button { width: auto; min-height: 0; padding: 5px 10px; }
 @media (max-width: 1023px) { .topbar-tabs { display: none; } } /* bottom-nav covers views on mobile */
 
 /* Sidebar project action variants */
