@@ -50,7 +50,31 @@ function createFakeRepository() {
     },
   ];
   const links = [];
+  const activity = [];
+  let activitySeq = 0;
   return {
+    async getTask(id) {
+      const task = tasks.find(item => item.id === id);
+      return task ? { ...task } : null;
+    },
+    async recordActivity(taskId, eventType, message) {
+      activitySeq += 1;
+      const event = {
+        id: `activity-${activitySeq}`,
+        taskId,
+        eventType,
+        message,
+        createdAt: 'now',
+      };
+      activity.push(event);
+      return event;
+    },
+    async listTaskActivity(taskId) {
+      return activity
+        .filter(event => event.taskId === taskId)
+        .slice()
+        .reverse();
+    },
     async listTasks(filters = {}) {
       return tasks.filter((task) => {
         if (filters.projectId && task.projectId !== filters.projectId) return false;
@@ -1591,6 +1615,112 @@ test('DELETE /api/tasks/:id/documents/:documentId rejects malformed documentId',
 
   assert.equal(response.statusCode, 400);
   assert.equal(response.json().message, 'documentId is invalid');
+
+  await app.close();
+});
+
+test('GET /api/tasks/:id/activity logs a created event after POST /api/tasks', async () => {
+  const app = await buildApp({
+    skipDb: true,
+    tasksRepository: createFakeRepository(),
+    projectsRepository: createFakeProjectsRepository(),
+  });
+
+  const created = await app.inject({
+    method: 'POST',
+    url: '/api/tasks',
+    payload: {
+      title: 'Back up CloudNativePG',
+      description: '',
+      priority: 'high',
+      status: 'planned',
+      project: 'homelab',
+      dueDate: '2026-05-12',
+      sortOrder: 0,
+    },
+  });
+  assert.equal(created.statusCode, 201);
+  const taskId = created.json().id;
+
+  const response = await app.inject({
+    method: 'GET',
+    url: `/api/tasks/${taskId}/activity`,
+  });
+
+  assert.equal(response.statusCode, 200);
+  const events = response.json();
+  assert.ok(events.some(event => event.eventType === 'created'));
+
+  await app.close();
+});
+
+test('GET /api/tasks/:id/activity records a status event after a status change', async () => {
+  const app = await buildApp({
+    skipDb: true,
+    tasksRepository: createFakeRepository(),
+    projectsRepository: createFakeProjectsRepository(),
+  });
+
+  const patch = await app.inject({
+    method: 'PATCH',
+    url: `/api/tasks/${TASK_ID}`,
+    payload: { status: 'in-progress' },
+  });
+  assert.equal(patch.statusCode, 200);
+
+  const response = await app.inject({
+    method: 'GET',
+    url: `/api/tasks/${TASK_ID}/activity`,
+  });
+
+  assert.equal(response.statusCode, 200);
+  const events = response.json();
+  const statusEvent = events.find(event => event.eventType === 'status');
+  assert.ok(statusEvent);
+  assert.equal(statusEvent.message, 'Status → in-progress');
+
+  await app.close();
+});
+
+test('GET /api/tasks/:id/activity records an archived event after DELETE', async () => {
+  const app = await buildApp({
+    skipDb: true,
+    tasksRepository: createFakeRepository(),
+    projectsRepository: createFakeProjectsRepository(),
+  });
+
+  const archived = await app.inject({
+    method: 'DELETE',
+    url: `/api/tasks/${TASK_ID}`,
+  });
+  assert.equal(archived.statusCode, 200);
+
+  const response = await app.inject({
+    method: 'GET',
+    url: `/api/tasks/${TASK_ID}/activity`,
+  });
+
+  assert.equal(response.statusCode, 200);
+  const events = response.json();
+  assert.ok(events.some(event => event.eventType === 'archived'));
+
+  await app.close();
+});
+
+test('GET /api/tasks/:id/activity rejects malformed task id', async () => {
+  const app = await buildApp({
+    skipDb: true,
+    tasksRepository: createFakeRepository(),
+    projectsRepository: createFakeProjectsRepository(),
+  });
+
+  const response = await app.inject({
+    method: 'GET',
+    url: '/api/tasks/not-a-uuid/activity',
+  });
+
+  assert.equal(response.statusCode, 400);
+  assert.match(response.json().message, /task id/);
 
   await app.close();
 });

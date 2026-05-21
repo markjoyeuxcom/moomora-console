@@ -239,6 +239,11 @@ export async function registerTasksRoutes(app, options = {}) {
   const repository = options.tasksRepository || app.tasksRepository || createTasksRepository(app.db);
   const projectsRepository = options.projectsRepository || app.projectsRepository || createProjectsRepository(app.db);
 
+  const logActivity = async (taskId, eventType, message) => {
+    try { if (repository.recordActivity) await repository.recordActivity(taskId, eventType, message); }
+    catch { /* activity logging is best-effort; never fail the mutation */ }
+  };
+
   async function resolveProjectId(value) {
     if (value === undefined || value === null || value === '') return undefined;
     const project = await projectsRepository.resolveProject(String(value));
@@ -334,7 +339,9 @@ export async function registerTasksRoutes(app, options = {}) {
     if (resolvedId === null) { reply.code(400); return { message: 'project is invalid' }; }
     request.body.projectId = resolvedId;
     reply.code(201);
-    return repository.createTask(cleanTaskPayload(request.body));
+    const created = await repository.createTask(cleanTaskPayload(request.body));
+    await logActivity(created.id, 'created', 'Task created');
+    return created;
   });
 
   app.patch('/api/tasks/reorder', async (request, reply) => {
@@ -344,7 +351,26 @@ export async function registerTasksRoutes(app, options = {}) {
       return { message: validationError };
     }
 
-    return repository.reorderTasks(cleanTaskReorderPayload(request.body));
+    const updates = cleanTaskReorderPayload(request.body);
+    const priorStatuses = new Map();
+    if (repository.getTask) {
+      for (const update of updates) {
+        const prior = await repository.getTask(update.id);
+        if (prior) priorStatuses.set(update.id, prior.status);
+      }
+    }
+
+    const reordered = await repository.reorderTasks(updates);
+
+    for (const task of reordered) {
+      if (!task) continue;
+      const priorStatus = priorStatuses.get(task.id);
+      if (priorStatus !== undefined && priorStatus !== task.status) {
+        await logActivity(task.id, 'status', `Status → ${task.status}`);
+      }
+    }
+
+    return reordered;
   });
 
   app.get('/api/tasks/:id/documents', async (request, reply) => {
@@ -393,6 +419,14 @@ export async function registerTasksRoutes(app, options = {}) {
     return repository.listTaskDocuments(id);
   });
 
+  app.get('/api/tasks/:id/activity', async (request, reply) => {
+    if (!isValidUuid(request.params.id)) {
+      reply.code(400);
+      return { message: 'task id is invalid' };
+    }
+    return repository.listTaskActivity ? repository.listTaskActivity(request.params.id) : [];
+  });
+
   app.patch('/api/tasks/:id/restore', async (request, reply) => {
     if (!isValidUuid(request.params.id)) {
       reply.code(400);
@@ -404,6 +438,7 @@ export async function registerTasksRoutes(app, options = {}) {
       reply.code(404);
       return { message: 'task not found' };
     }
+    await logActivity(task.id, 'restored', 'Task restored');
     return task;
   });
 
@@ -440,10 +475,15 @@ export async function registerTasksRoutes(app, options = {}) {
       fields.projectId = resolvedId;
     }
 
+    const prior = repository.getTask ? await repository.getTask(request.params.id) : null;
+
     const task = await repository.updateTask(request.params.id, fields);
     if (!task) {
       reply.code(404);
       return { message: 'task not found' };
+    }
+    if (prior && prior.status !== task.status) {
+      await logActivity(task.id, 'status', `Status → ${task.status}`);
     }
     return task;
   });
@@ -459,6 +499,7 @@ export async function registerTasksRoutes(app, options = {}) {
       reply.code(404);
       return { message: 'task not found' };
     }
+    await logActivity(task.id, 'archived', 'Task archived');
     return task;
   });
 }
