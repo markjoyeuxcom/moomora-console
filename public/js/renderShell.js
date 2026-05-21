@@ -153,6 +153,10 @@ function renderProjectButtons(activeProject, projects) {
   const allActive = activeProject === 'all';
   const newBtn = `
           <button class="nav-button nav-button--accent" type="button" data-action="new-project"><span>[+] new project</span></button>`;
+  const manageBtn = `
+          <button class="nav-button nav-button--accent" type="button" data-action="open-project-manager"><span>[≡] manage projects</span></button>`;
+  const archivedBtn = `
+          <button class="nav-button nav-button--accent" type="button" data-action="open-archived-projects"><span>[▤] archived projects</span></button>`;
   const allBtn = `
           <button class="nav-button${allActive ? ' is-active' : ''}" type="button" aria-pressed="${allActive}" data-project="all">
             <span>All projects</span>
@@ -164,12 +168,7 @@ function renderProjectButtons(activeProject, projects) {
             <span>${escapeHtml(project.name)}</span>
           </button>`;
   }).join('');
-  const footer = `
-          <div class="side-nav__footer">
-            <button class="bracket-button bracket-button--quiet" type="button" data-action="open-project-manager">[≡] manage projects</button>
-            <button class="bracket-button bracket-button--quiet" type="button" data-action="open-archived-projects">[▤] archived projects</button>
-          </div>`;
-  return newBtn + allBtn + projectBtns + footer;
+  return newBtn + manageBtn + archivedBtn + allBtn + projectBtns;
 }
 
 function renderMetricCards(metrics) {
