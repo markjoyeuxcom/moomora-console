@@ -85,6 +85,16 @@ test('buildCreateTask returns parameterized insert query', () => {
   assert.equal(query.values[0], 'Wire API adapter');
 });
 
+test('buildCreateTask places notes at $8', () => {
+  const query = buildCreateTask({
+    title: 'T', description: '', priority: 'low', status: 'planned',
+    projectId: PROJECT_ID, dueDate: null, sortOrder: 0,
+    notes: 'Handoff context',
+  });
+  assert.match(query.text, /sort_order, notes\)/);
+  assert.equal(query.values[7], 'Handoff context');
+});
+
 test('buildUpdateTask maps notes to the notes column', () => {
   const q = buildUpdateTask('11111111-1111-4111-8111-111111111111', { notes: 'Handoff: paused on step 3.' });
   assert.match(q.text, /notes = \$2/);
