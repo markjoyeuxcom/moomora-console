@@ -148,7 +148,7 @@ export function renderSwimlaneBoardHtml(tasks = [], selectedTaskId = null, optio
       ${lanes.map(({ project, tasks: laneTasks }) => {
         const isCollapsed = collapsed[project.id] === true;
         return `
-        <section class="board-lane" data-board-lane="${escapeHtml(project.id)}">
+        <section class="board-lane${isCollapsed ? ' board-lane--collapsed' : ''}" data-board-lane="${escapeHtml(project.id)}">
           <header class="board-lane__header">
             <button class="board-lane__toggle" type="button" data-action="toggle-board-lane" data-project-id="${escapeHtml(project.id)}" aria-label="Toggle ${escapeHtml(project.name)}" aria-expanded="${!isCollapsed}">
               <span class="board-lane__glyph">${isCollapsed ? '▸' : '▾'}</span>

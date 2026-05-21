@@ -138,6 +138,7 @@ test('renderSwimlaneBoardHtml renders a lane only for projects with tasks', () =
   assert.match(html, /board-lane__name">Homelab</);
   assert.match(html, /data-action="toggle-board-lane"[^>]*data-project-id="p1"/);
   assert.match(html, /board-card__due--over/);
+  assert.match(html, /class="board-panel"/);
   assert.doesNotMatch(html, /board-card__chip/);
 });
 
