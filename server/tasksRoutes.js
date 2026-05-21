@@ -160,6 +160,12 @@ function validateTaskPatchPayload(payload) {
     return 'description is invalid';
   }
   if (
+    Object.prototype.hasOwnProperty.call(payload, 'notes') &&
+    typeof payload.notes !== 'string'
+  ) {
+    return 'notes is invalid';
+  }
+  if (
     Object.prototype.hasOwnProperty.call(payload, 'priority') &&
     !PRIORITIES.has(payload.priority)
   ) {
@@ -197,7 +203,7 @@ function cleanTaskPatchPayload(payload) {
   return PATCH_FIELDS.reduce((fields, field) => {
     if (field === 'project') return fields; // slug only — projectId is resolved separately
     if (!Object.prototype.hasOwnProperty.call(payload, field)) return fields;
-    if (field === 'title' || field === 'description') {
+    if (field === 'title' || field === 'description' || field === 'notes') {
       fields[field] = payload[field].trim();
       return fields;
     }
