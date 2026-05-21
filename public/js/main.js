@@ -288,6 +288,7 @@ function renderWorkspace() {
   });
 
   bindBoardEvents(workspace);
+  bindListGroupingEvents(workspace);
 
   const editButton = workspace.querySelector('[data-action="edit-task"]');
   editButton?.addEventListener('click', () => {
@@ -1122,7 +1123,9 @@ function bindBoardEvents(workspace) {
       renderWorkspace();
     });
   });
+}
 
+function bindListGroupingEvents(workspace) {
   workspace.querySelectorAll('[data-action="set-list-grouping"]').forEach((btn) => {
     btn.addEventListener('click', (event) => {
       event.preventDefault();
