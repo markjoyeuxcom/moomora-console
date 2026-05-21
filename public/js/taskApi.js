@@ -110,6 +110,12 @@ export async function fetchTaskChecklist(taskId) {
   return response.json();
 }
 
+export async function fetchTaskActivity(taskId) {
+  const response = await fetch(`/api/tasks/${taskId}/activity`);
+  if (!response.ok) throw new Error('Failed to load activity');
+  return response.json();
+}
+
 export async function addChecklistItem(taskId, label) {
   const response = await fetch(`/api/tasks/${taskId}/checklist`, {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ label }),

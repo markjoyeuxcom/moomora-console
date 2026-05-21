@@ -96,6 +96,21 @@ function renderChecklist(items = [], options = {}) {
       </section>`;
 }
 
+function renderActivity(events = []) {
+  const rows = events.length
+    ? events.map(e => `
+        <div class="activity-item">
+          <span class="activity-item__msg">${escapeHtml(e.message || '')}</span>
+          <span class="activity-item__time">${escapeHtml((e.createdAt || '').slice(0, 10))}</span>
+        </div>`).join('')
+    : '<p class="activity__empty">No activity yet.</p>';
+  return `
+      <section class="detail-block">
+        <h3>Activity</h3>
+        <div class="activity">${rows}</div>
+      </section>`;
+}
+
 function renderNotes(task, options = {}) {
   const readOnly = Boolean(options.readOnly);
   const notes = task.notes || '';
@@ -168,7 +183,7 @@ export function renderTaskDetailHtml(task, options = {}) {
       <dl class="detail-meta" aria-label="Task metadata">${renderMetaItem('Priority', priorityBadge)}${renderMetaItem('Status', escapeHtml(status))}${renderMetaItem('Due', escapeHtml(dueDate))}
       </dl>
 
-      <div class="detail-body">${renderLinkedDocs(options.linkedDocuments, options)}${renderChecklist(options.checklistItems, options)}${renderNotes(task, options)}${renderDetailBlock('Activity', 'Task history will show recent changes when activity tracking is enabled.')}
+      <div class="detail-body">${renderLinkedDocs(options.linkedDocuments, options)}${renderChecklist(options.checklistItems, options)}${renderNotes(task, options)}${renderActivity(options.activityEvents)}
       </div>
     </aside>`;
 }

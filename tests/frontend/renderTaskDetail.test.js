@@ -118,3 +118,21 @@ test('renderTaskDetailHtml checklist is read-only with no controls when readOnly
   assert.doesNotMatch(html, /data-action="toggle-checklist-item"/);
   assert.doesNotMatch(html, /data-action="add-checklist-item"/);
 });
+
+test('renderTaskDetailHtml renders an activity feed newest-first', () => {
+  const html = renderTaskDetailHtml(
+    { id: 't1', title: 'X', status: 'planned', priority: 'low' },
+    { activityEvents: [
+      { id: 'a2', message: 'Status → in-progress', createdAt: '2026-05-20T10:00:00.000Z' },
+      { id: 'a1', message: 'Task created', createdAt: '2026-05-19T09:00:00.000Z' },
+    ] },
+  );
+  assert.match(html, /Activity/);
+  assert.match(html, /Status → in-progress/);
+  assert.match(html, /Task created/);
+});
+
+test('renderTaskDetailHtml shows an empty activity state', () => {
+  const html = renderTaskDetailHtml({ id: 't1', title: 'X', status: 'planned', priority: 'low' }, { activityEvents: [] });
+  assert.match(html, /No activity yet\./);
+});

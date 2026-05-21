@@ -9,6 +9,7 @@ import {
   deleteArchivedTask,
   deleteChecklistItem,
   exportTasks,
+  fetchTaskActivity,
   fetchTaskChecklist,
   fetchTaskDocuments,
   fetchTasks,
@@ -234,6 +235,17 @@ async function loadTaskChecklist(taskId) {
   }
 }
 
+async function loadTaskActivity(taskId) {
+  if (!taskId) { setState({ taskActivity: [] }); return; }
+  const requestedTaskId = taskId;
+  try {
+    const events = await fetchTaskActivity(taskId);
+    if (state.selectedTaskId === requestedTaskId) setState({ taskActivity: events });
+  } catch {
+    if (state.selectedTaskId === requestedTaskId) setState({ taskActivity: [] });
+  }
+}
+
 function renderWorkspace() {
   const workspace = document.getElementById('workspace');
   if (!workspace) return;
@@ -250,7 +262,7 @@ function renderWorkspace() {
 
   workspace.innerHTML = [
     renderWorkspacePrimary(visibleTasks, selectedTaskId),
-    renderTaskDetailHtml(task, { readOnly, restoreAction: readOnly, deleteAction: readOnly, mobileDetailOpen: state.mobileDetailOpen, linkedDocuments: state.taskDocuments, checklistItems: state.taskChecklist }),
+    renderTaskDetailHtml(task, { readOnly, restoreAction: readOnly, deleteAction: readOnly, mobileDetailOpen: state.mobileDetailOpen, linkedDocuments: state.taskDocuments, checklistItems: state.taskChecklist, activityEvents: state.taskActivity }),
   ].join('');
 
   workspace.classList.toggle('is-mobile-detail-open', Boolean(state.mobileDetailOpen));
@@ -263,6 +275,7 @@ function renderWorkspace() {
       });
       await loadTaskDocuments(row.dataset.taskId);
       await loadTaskChecklist(row.dataset.taskId);
+      await loadTaskActivity(row.dataset.taskId);
       renderWorkspace();
     });
   });
@@ -2011,6 +2024,7 @@ function bindTaskFormEvents() {
         formError: '',
       });
       await loadTasks({ selectedTaskId: savedTask.id });
+      await loadTaskActivity(state.selectedTaskId);
     } catch {
       setState({
         isSaving: false,
@@ -2048,6 +2062,7 @@ async function loadTasks({ selectedTaskId = state.selectedTaskId } = {}) {
   });
   await loadTaskDocuments(resolvedTaskId);
   await loadTaskChecklist(resolvedTaskId);
+  await loadTaskActivity(resolvedTaskId);
   renderApp();
 }
 

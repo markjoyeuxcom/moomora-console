@@ -46,6 +46,7 @@ export const state = {
   libraryGroupByType: false,
   taskDocuments: [],
   taskChecklist: [],
+  taskActivity: [],
   isLinkPickerOpen: false,
   linkPickerDocuments: [],
   linkPickerQuery: '',
