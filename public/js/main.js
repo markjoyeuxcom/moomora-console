@@ -1010,7 +1010,8 @@ function bindBoardEvents(workspace) {
   });
 
   workspace.querySelectorAll('[data-action="set-board-grouping"]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
       const grouping = btn.dataset.grouping === 'swimlanes' ? 'swimlanes' : 'flat';
       persistBoardGrouping(grouping);
       setState({ boardGrouping: grouping });
@@ -1019,7 +1020,8 @@ function bindBoardEvents(workspace) {
   });
 
   workspace.querySelectorAll('[data-action="toggle-board-lane"]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
       const id = btn.dataset.projectId;
       if (!id) return;
       setState({ boardLaneCollapsed: { ...state.boardLaneCollapsed, [id]: state.boardLaneCollapsed[id] !== true } });
@@ -1085,7 +1087,8 @@ function listOptionsForView(activeView) {
 
 function renderWorkspacePrimary(visibleTasks, selectedTaskId) {
   if (state.activeView === 'board') {
-    const useSwimlanes = state.boardGrouping === 'swimlanes' && state.activeProject === 'all';
+    const isAllProjects = state.activeProject === 'all';
+    const useSwimlanes = state.boardGrouping === 'swimlanes' && isAllProjects;
     const board = useSwimlanes
       ? renderSwimlaneBoardHtml(visibleTasks, selectedTaskId, {
           today: today(),
@@ -1095,10 +1098,10 @@ function renderWorkspacePrimary(visibleTasks, selectedTaskId) {
       : renderBoardHtml(visibleTasks, selectedTaskId, {
           boardOpenSections: state.boardOpenSections,
           today: today(),
-          showProjectChips: state.activeProject === 'all',
+          showProjectChips: isAllProjects,
           projects: state.projects,
         });
-    const toolbar = state.activeProject === 'all' ? renderBoardToolbar(state.boardGrouping) : '';
+    const toolbar = isAllProjects ? renderBoardToolbar(state.boardGrouping) : '';
     return toolbar + board;
   }
 
