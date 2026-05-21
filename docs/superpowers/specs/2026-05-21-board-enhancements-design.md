@@ -113,7 +113,7 @@ Parallels the existing `palette` and `fontScale` preferences exactly.
 
 ## Data Flow Summary
 
-```
+```text
 main.js renderWorkspacePrimary()
   activeView === 'board' ?
     boardGrouping === 'swimlanes' && activeProject === 'all'
@@ -131,7 +131,7 @@ clicks:
 1. **Density** (preferences → settings panel → CSS → main wiring → tests). Self-contained; can ship first.
 2. **Swimlanes state + persistence** (state.js + load/save).
 3. **Swimlane renderer** (renderBoard.js shared helpers + `renderSwimlaneBoardHtml` + styles + tests).
-4. **Toggle + lane-collapse wiring** (main.js + content-header control + tests).
+4. **Toggle + lane-collapse wiring** (main.js + board-toolbar control + tests).
 
 ## Risks / Notes
 
