@@ -68,6 +68,26 @@ function renderLinkedDocs(linkedDocuments = [], options = {}) {
       </section>`;
 }
 
+function renderNotes(task, options = {}) {
+  const readOnly = Boolean(options.readOnly);
+  const notes = task.notes || '';
+  if (readOnly) {
+    return `
+      <section class="detail-block">
+        <h3>Notes</h3>
+        <p>${notes ? escapeHtml(notes) : 'No notes.'}</p>
+      </section>`;
+  }
+  return `
+      <section class="detail-block">
+        <div class="detail-block__head">
+          <h3>Notes</h3>
+          <button class="bracket-button bracket-button--quiet" type="button" data-action="save-task-notes">[s] save</button>
+        </div>
+        <textarea class="detail-notes" data-task-notes rows="4" placeholder="Operational notes and handoff context…">${escapeHtml(notes)}</textarea>
+      </section>`;
+}
+
 function actionsFor(options) {
   const readOnly = Boolean(options.readOnly);
   const restoreAction = Boolean(options.restoreAction);
@@ -120,7 +140,7 @@ export function renderTaskDetailHtml(task, options = {}) {
       <dl class="detail-meta" aria-label="Task metadata">${renderMetaItem('Priority', priorityBadge)}${renderMetaItem('Status', escapeHtml(status))}${renderMetaItem('Due', escapeHtml(dueDate))}
       </dl>
 
-      <div class="detail-body">${renderLinkedDocs(options.linkedDocuments, options)}${renderDetailBlock('Checklist', 'Checklist items will be tracked here as execution details are added.')}${renderDetailBlock('Notes', 'Operational notes and handoff context will appear here.')}${renderDetailBlock('Activity', 'Task history will show recent changes when activity tracking is enabled.')}
+      <div class="detail-body">${renderLinkedDocs(options.linkedDocuments, options)}${renderDetailBlock('Checklist', 'Checklist items will be tracked here as execution details are added.')}${renderNotes(task, options)}${renderDetailBlock('Activity', 'Task history will show recent changes when activity tracking is enabled.')}
       </div>
     </aside>`;
 }

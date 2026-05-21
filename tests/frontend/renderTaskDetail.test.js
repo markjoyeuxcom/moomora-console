@@ -65,3 +65,21 @@ test('linked docs shows the link picker button when not read-only', () => {
   assert.match(html, /data-action="open-link-picker"/);
   assert.match(html, /\[\+\] link doc/);
 });
+
+test('renderTaskDetailHtml renders an editable notes textarea with the task notes', () => {
+  const html = renderTaskDetailHtml(
+    { id: 't1', title: 'X', status: 'planned', priority: 'low', notes: 'paused on step 3' },
+    {},
+  );
+  assert.match(html, /<textarea[^>]*data-task-notes[^>]*>paused on step 3<\/textarea>/);
+  assert.match(html, /data-action="save-task-notes"/);
+});
+
+test('renderTaskDetailHtml renders notes read-only when readOnly', () => {
+  const html = renderTaskDetailHtml(
+    { id: 't1', title: 'X', status: 'completed', priority: 'low', notes: 'archived note' },
+    { readOnly: true },
+  );
+  assert.doesNotMatch(html, /data-action="save-task-notes"/);
+  assert.match(html, /archived note/);
+});
