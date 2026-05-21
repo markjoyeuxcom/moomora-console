@@ -183,6 +183,19 @@ const sharedTasks = [
 function createMemoryTasksRepository(documentsRef) {
   const links = [];
   const tasks = sharedTasks;
+  const activity = [];
+
+  // Seed one `created` activity event per seeded task so the demo detail panel
+  // shows a populated activity feed out of the box.
+  for (const task of tasks) {
+    activity.push({
+      id: `act-${activity.length + 1}`,
+      taskId: task.id,
+      eventType: 'created',
+      message: 'Task created',
+      createdAt: new Date().toISOString(),
+    });
+  }
 
   return {
     async listTasks(filters = {}) {
@@ -245,6 +258,23 @@ function createMemoryTasksRepository(documentsRef) {
         Object.assign(task, update, { updatedAt: new Date().toISOString() });
         return task;
       }).filter(Boolean);
+    },
+
+    async getTask(id) {
+      // Return a snapshot (not the live object) so the route layer can compare
+      // a task's prior status against the post-update status — updateTask
+      // mutates the stored object in place, which would otherwise make the
+      // `prior` reference reflect the new status before the comparison.
+      const task = tasks.find(t => t.id === id);
+      return task ? { ...task } : null;
+    },
+    async recordActivity(taskId, eventType, message) {
+      const event = { id: `act-${activity.length + 1}`, taskId, eventType, message, createdAt: new Date().toISOString() };
+      activity.push(event);
+      return event;
+    },
+    async listTaskActivity(taskId) {
+      return activity.filter(a => a.taskId === taskId).slice().reverse();
     },
 
     async listTaskDocuments(taskId) {
