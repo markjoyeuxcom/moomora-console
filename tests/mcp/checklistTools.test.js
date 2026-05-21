@@ -74,6 +74,10 @@ test('set_checklist_item validates ids and forwards completed to setChecklistIte
   const res = await tool.handler({ taskId: TASK_ID, itemId: ITEM_ID, completed: true });
   assert.deepEqual(received, { taskId: TASK_ID, itemId: ITEM_ID, completed: true });
   assert.equal(JSON.parse(res.content[0].text).completed, true);
+
+  const resFalse = await tool.handler({ taskId: TASK_ID, itemId: ITEM_ID, completed: false });
+  assert.deepEqual(received, { taskId: TASK_ID, itemId: ITEM_ID, completed: false });
+  assert.equal(JSON.parse(resFalse.content[0].text).completed, false);
 });
 
 test('delete_checklist_item validates ids and forwards to deleteChecklistItem', async () => {
