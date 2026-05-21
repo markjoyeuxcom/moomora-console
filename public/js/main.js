@@ -1223,7 +1223,7 @@ function renderWorkspacePrimary(visibleTasks, selectedTaskId) {
   }
 
   const listOptions = listOptionsForView(state.activeView);
-  const showListToolbar = state.activeProject === 'all' && state.activeView === 'tasks';
+  const showListToolbar = state.activeProject === 'all' && state.activeView === 'list';
   const useSwimlanes = showListToolbar && state.listGrouping === 'swimlanes';
   const toolbar = showListToolbar ? renderListToolbar(state.listGrouping) : '';
   return useSwimlanes
