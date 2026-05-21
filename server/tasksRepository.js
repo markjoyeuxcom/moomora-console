@@ -214,6 +214,28 @@ export function buildLinkExists(taskId, documentId) {
   };
 }
 
+export function normalizeActivityRow(row) {
+  return { id: row.id, taskId: row.task_id, eventType: row.event_type, message: row.message, createdAt: row.created_at };
+}
+
+export function buildRecordActivity(taskId, eventType, message) {
+  return {
+    text: `insert into task_activity (task_id, event_type, message) values ($1, $2, $3) returning *`,
+    values: [taskId, eventType, message],
+  };
+}
+
+export function buildListTaskActivity(taskId) {
+  return {
+    text: `select * from task_activity where task_id = $1 order by created_at desc, id desc`,
+    values: [taskId],
+  };
+}
+
+export function buildGetTask(id) {
+  return { text: `select * from tasks where id = $1 limit 1`, values: [id] };
+}
+
 export function createTasksRepository(db) {
   return {
     async listTasks(filters = {}) {
@@ -328,6 +350,24 @@ export function createTasksRepository(db) {
       const query = buildUnlinkTaskDocument(taskId, documentId);
       const result = await db.query(query.text, query.values);
       return result.rows.length > 0;
+    },
+
+    async getTask(id) {
+      const q = buildGetTask(id);
+      const result = await db.query(q.text, q.values);
+      return result.rows[0] ? normalizeTaskRow(result.rows[0]) : null;
+    },
+
+    async recordActivity(taskId, eventType, message) {
+      const q = buildRecordActivity(taskId, eventType, message);
+      const result = await db.query(q.text, q.values);
+      return normalizeActivityRow(result.rows[0]);
+    },
+
+    async listTaskActivity(taskId) {
+      const q = buildListTaskActivity(taskId);
+      const result = await db.query(q.text, q.values);
+      return result.rows.map(normalizeActivityRow);
     },
   };
 }

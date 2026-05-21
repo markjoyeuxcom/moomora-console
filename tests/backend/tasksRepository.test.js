@@ -14,6 +14,10 @@ import {
   buildLinkTaskDocument,
   buildUnlinkTaskDocument,
   buildLinkExists,
+  buildRecordActivity,
+  buildListTaskActivity,
+  normalizeActivityRow,
+  buildGetTask,
 } from '../../server/tasksRepository.js';
 
 const PROJECT_ID = '99999999-9999-4999-8999-999999999999';
@@ -433,4 +437,32 @@ test('unlinkTaskDocument returns false when link does not exist', async () => {
     '22222222-2222-4222-8222-222222222222',
   );
   assert.equal(result, false);
+});
+
+test('buildRecordActivity inserts an event', () => {
+  const q = buildRecordActivity(PROJECT_ID, 'status', 'Status → in-progress');
+  assert.match(q.text, /insert into task_activity/);
+  assert.match(q.text, /\(task_id, event_type, message\)/);
+  assert.deepEqual(q.values, [PROJECT_ID, 'status', 'Status → in-progress']);
+});
+
+test('buildListTaskActivity orders newest first', () => {
+  const q = buildListTaskActivity(PROJECT_ID);
+  assert.match(q.text, /from task_activity/);
+  assert.match(q.text, /where task_id = \$1/);
+  assert.match(q.text, /order by created_at desc/);
+  assert.deepEqual(q.values, [PROJECT_ID]);
+});
+
+test('normalizeActivityRow maps columns', () => {
+  assert.deepEqual(
+    normalizeActivityRow({ id: 'a', task_id: PROJECT_ID, event_type: 'created', message: 'Task created', created_at: 'c' }),
+    { id: 'a', taskId: PROJECT_ID, eventType: 'created', message: 'Task created', createdAt: 'c' },
+  );
+});
+
+test('buildGetTask selects one task by id', () => {
+  const q = buildGetTask(PROJECT_ID);
+  assert.match(q.text, /select \* from tasks where id = \$1/);
+  assert.deepEqual(q.values, [PROJECT_ID]);
 });
