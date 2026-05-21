@@ -70,11 +70,13 @@ test('renderShellHtml includes new-project and open-project-manager controls', (
   assert.match(html, /data-action="open-project-manager"/);
 });
 
-test('renderShellHtml exposes manage and archived projects as topbar actions', () => {
+test('renderShellHtml exposes manage and archived projects in the sidebar footer', () => {
   const html = renderShellHtml({ activeProject: 'all', projects: [] });
-  // Both project-management controls live in the topbar action group.
-  assert.match(html, /class="topbar-actions">[\s\S]*data-action="open-project-manager"/);
-  assert.match(html, /class="topbar-actions">[\s\S]*data-action="open-archived-projects"/);
+  // Project-management controls live in the sidebar footer, not the topbar.
+  assert.match(html, /class="side-nav__footer">[\s\S]*data-action="open-project-manager"/);
+  assert.match(html, /class="side-nav__footer">[\s\S]*data-action="open-archived-projects"/);
+  // The topbar keeps only the global app actions.
+  assert.doesNotMatch(html, /class="topbar-actions">[\s\S]*data-action="open-project-manager"/);
 });
 
 // ---------------------------------------------------------------------------

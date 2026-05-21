@@ -164,7 +164,12 @@ function renderProjectButtons(activeProject, projects) {
             <span>${escapeHtml(project.name)}</span>
           </button>`;
   }).join('');
-  return newBtn + allBtn + projectBtns;
+  const footer = `
+          <div class="side-nav__footer">
+            <button class="bracket-button bracket-button--quiet" type="button" data-action="open-project-manager">[≡] manage</button>
+            <button class="bracket-button bracket-button--quiet" type="button" data-action="open-archived-projects">[▤] archived</button>
+          </div>`;
+  return newBtn + allBtn + projectBtns + footer;
 }
 
 function renderMetricCards(metrics) {
@@ -243,8 +248,6 @@ export function renderShellHtml({
             <input type="search" placeholder="${isLibraryView ? 'Search documents' : 'Search tasks'}" autocomplete="off" value="${escapeHtml(searchQuery)}" data-search-input>
           </label>
           <div class="topbar-actions">
-            <button type="button" data-action="open-project-manager" class="bracket-button">[≡] manage</button>
-            <button type="button" data-action="open-archived-projects" class="bracket-button">[▤] archived</button>
             <button type="button" data-action="open-settings" class="bracket-button">[~] settings</button>
             <button type="button" data-action="open-admin" class="bracket-button">[a] admin</button>
             ${isLibraryView ? '<button type="button" data-action="import-document" class="bracket-button">[↑] import</button>' : ''}

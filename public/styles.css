@@ -264,6 +264,17 @@ html {
   text-transform: uppercase;
 }
 
+/* Project-management actions, separated from the project list. */
+.side-nav__footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 10px 16px 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-dim);
+}
+
 .nav-button {
   display: flex;
   align-items: center;
