@@ -372,6 +372,44 @@ function createMemoryLibraryRepository(documents) {
   };
 }
 
+function createMemoryChecklistRepository() {
+  const items = [];
+  let seq = 0;
+  const nextId = () => `cl-${++seq}`;
+  return {
+    async listChecklist(taskId) {
+      return items.filter(i => i.taskId === taskId).sort((a, b) => a.sortOrder - b.sortOrder);
+    },
+    async addChecklistItem(taskId, label) {
+      const sortOrder = items.filter(i => i.taskId === taskId).reduce((m, i) => Math.max(m, i.sortOrder), -1) + 1;
+      const item = { id: nextId(), taskId, label, completed: false, sortOrder, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      items.push(item);
+      return item;
+    },
+    async setChecklistItemCompleted(itemId, completed) {
+      const it = items.find(i => i.id === itemId);
+      if (!it) return null;
+      it.completed = completed; it.updatedAt = new Date().toISOString();
+      return it;
+    },
+    async deleteChecklistItem(itemId) {
+      const i = items.findIndex(x => x.id === itemId);
+      if (i < 0) return null;
+      return items.splice(i, 1)[0];
+    },
+    _seed(taskId, labels) { for (const l of labels) { const sortOrder = items.filter(i => i.taskId === taskId).length; items.push({ id: nextId(), taskId, label: l, completed: false, sortOrder, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); } },
+  };
+}
+
+const checklistRepository = createMemoryChecklistRepository();
+
+// Seed checklist items onto the "Back up CNPG" task so the demo detail panel
+// shows a populated checklist out of the box.
+const backupCnpgTask = sharedTasks.find(t => t.title === 'Back up CNPG');
+if (backupCnpgTask) {
+  checklistRepository._seed(backupCnpgTask.id, ['Verify backup CR', 'Confirm object-store creds']);
+}
+
 const config = loadConfig({
   ...process.env,
   DATABASE_URL: '',
@@ -386,6 +424,7 @@ const app = await buildApp({
   tasksRepository: createMemoryTasksRepository(sharedDocuments),
   libraryRepository: createMemoryLibraryRepository(sharedDocuments),
   projectsRepository: createMemoryProjectsRepository(sharedProjects),
+  checklistRepository,
 });
 
 await app.listen({ host: config.host, port: config.port });
