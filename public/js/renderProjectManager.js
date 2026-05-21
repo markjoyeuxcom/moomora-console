@@ -1,8 +1,7 @@
-const STATUS_OPTIONS = [
+const STATUS_GROUPS = [
   { value: 'active', label: 'Active' },
   { value: 'on-hold', label: 'On hold' },
   { value: 'completed', label: 'Completed' },
-  { value: 'archived', label: 'Archived' },
 ];
 
 function escapeHtml(value) {
@@ -16,13 +15,11 @@ function escapeHtml(value) {
 
 function renderStatusSelect(project) {
   const id = escapeHtml(project.id);
-  // Fall back to the first option for a missing/unrecognised status so the
-  // rendered selection always matches what a save would submit.
-  const selected = STATUS_OPTIONS.some(option => option.value === project.status)
+  const selected = STATUS_GROUPS.some(option => option.value === project.status)
     ? project.status
-    : STATUS_OPTIONS[0].value;
+    : STATUS_GROUPS[0].value;
   return `<select class="project-row__status" data-project-status="${id}" aria-label="Status">${
-    STATUS_OPTIONS.map(option =>
+    STATUS_GROUPS.map(option =>
       `<option value="${option.value}"${option.value === selected ? ' selected' : ''}>${option.label}</option>`,
     ).join('')
   }</select>`;
@@ -38,12 +35,24 @@ function renderProjectRow(project) {
         <button class="bracket-button bracket-button--quiet" type="button" data-action="manager-move-up" data-project-id="${id}" aria-label="Move up">[↑]</button>
         <button class="bracket-button bracket-button--quiet" type="button" data-action="manager-move-down" data-project-id="${id}" aria-label="Move down">[↓]</button>
         <button class="bracket-button" type="button" data-action="manager-save" data-project-id="${id}">[s] save</button>
+        <button class="bracket-button bracket-button--quiet" type="button" data-action="manager-archive" data-project-id="${id}">[a] archive</button>
         <button class="bracket-button bracket-button--quiet" type="button" data-action="manager-delete" data-project-id="${id}">[x] delete</button>
       </div>
     </li>`;
 }
 
-export function renderProjectManagerHtml({ projects = [], error = '' } = {}) {
+function renderGroup(group, projects) {
+  const inGroup = projects.filter(p => (STATUS_GROUPS.some(g => g.value === p.status) ? p.status : 'active') === group.value);
+  if (inGroup.length === 0) return '';
+  return `
+    <li class="project-group" data-project-group="${group.value}">
+      <p class="project-group__label">${group.label} · ${inGroup.length}</p>
+      <ul class="project-manager__list">${inGroup.map(renderProjectRow).join('')}</ul>
+    </li>`;
+}
+
+export function renderProjectManagerHtml({ projects = [], archivedCount = 0, error = '' } = {}) {
+  const groups = STATUS_GROUPS.map(group => renderGroup(group, projects)).join('');
   return `
     <div class="modal-backdrop" data-project-manager>
       <section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="project-manager-title">
@@ -52,7 +61,7 @@ export function renderProjectManagerHtml({ projects = [], error = '' } = {}) {
             <div class="modal-header__heading">
               <span class="detail-kicker">Organize</span>
               <h2 id="project-manager-title">Projects</h2>
-              <p>Create, rename, set status, reorder, and delete your projects.</p>
+              <p>Create, rename, set status, reorder, archive, and delete your projects.</p>
             </div>
             <button class="modal-header__close bracket-button bracket-button--quiet" type="button" data-action="close-project-manager" aria-label="Close projects">[x] close</button>
           </div>
@@ -68,11 +77,10 @@ export function renderProjectManagerHtml({ projects = [], error = '' } = {}) {
             <input type="text" class="project-manager__new-name" data-project-new-name placeholder="New project name" autocomplete="off" aria-label="New project name">
             <button class="bracket-button bracket-button--primary" type="button" data-action="manager-create">[+] add</button>
           </div>
-          <ul class="project-manager__list">
-            ${projects.length
-              ? projects.map(renderProjectRow).join('')
-              : '<li class="project-manager__empty">No projects yet — add one above.</li>'}
+          <ul class="project-manager__groups">
+            ${groups || '<li class="project-manager__empty">No projects yet — add one above.</li>'}
           </ul>
+          <button class="bracket-button bracket-button--quiet project-manager__archive-link" type="button" data-action="open-project-archive">🗄 archived projects · ${Number(archivedCount) || 0}</button>
         </div>
       </section>
     </div>`;

@@ -31,11 +31,35 @@ test('renders the create row', () => {
   assert.match(html, /data-action="manager-create"/);
 });
 
-test('renders all four status options for each row', () => {
+test('renders live projects under status group headings', () => {
+  const html = renderProjectManagerHtml({ projects: PROJECTS });
+  assert.match(html, /Active/);
+  assert.match(html, /On hold/);
+});
+
+test('status select offers only live status options (no archived)', () => {
   const html = renderProjectManagerHtml({ projects: [PROJECTS[0]] });
-  for (const value of ['active', 'on-hold', 'completed', 'archived']) {
-    assert.match(html, new RegExp(`<option value="${value}"`));
-  }
+  assert.match(html, /<option value="active"/);
+  assert.match(html, /<option value="on-hold"/);
+  assert.match(html, /<option value="completed"/);
+  assert.doesNotMatch(html, /<option value="archived"/);
+});
+
+test('per-row archive action is rendered', () => {
+  const html = renderProjectManagerHtml({ projects: PROJECTS });
+  assert.match(html, /data-action="manager-archive" data-project-id="p1"/);
+});
+
+test('archive entry button with count is rendered', () => {
+  const html = renderProjectManagerHtml({ projects: PROJECTS, archivedCount: 2 });
+  assert.match(html, /data-action="open-project-archive"/);
+  assert.match(html, /archived projects · 2/);
+});
+
+test('archive entry button shows 0 when archivedCount is omitted', () => {
+  const html = renderProjectManagerHtml({ projects: PROJECTS });
+  assert.match(html, /data-action="open-project-archive"/);
+  assert.match(html, /archived projects · 0/);
 });
 
 test('escapes project names', () => {
@@ -50,9 +74,8 @@ test('shows an error banner when error is provided', () => {
   assert.match(html, /Could not delete/);
 });
 
-test('renders an empty list with a hint', () => {
+test('renders an empty state when there are no live projects', () => {
   const html = renderProjectManagerHtml({ projects: [] });
-  assert.match(html, /project-manager__list/);
   assert.match(html, /project-manager__empty/);
 });
 
