@@ -3323,3 +3323,8 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
 .board-lane__name { font-family: var(--font-mono); font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; }
 .board-lane__count { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-amber); }
 .board-lane .board-panel { padding: 10px; background: transparent; }
+
+/* The native date-picker icon is dark by default, nearly invisible on the dark
+   palettes. Invert it on dark themes; leave it dark on the light Daylight palette. */
+input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.85); opacity: 0.85; cursor: pointer; }
+:root[data-palette="daylight"] input[type="date"]::-webkit-calendar-picker-indicator { filter: none; opacity: 1; }
