@@ -37,14 +37,6 @@ function renderMetaItem(label, value) {
         </div>`;
 }
 
-function renderDetailBlock(title, text) {
-  return `
-      <section class="detail-block">
-        <h3>${title}</h3>
-        <p>${text}</p>
-      </section>`;
-}
-
 function renderLinkedDocs(linkedDocuments = [], options = {}) {
   const readOnly = Boolean(options.readOnly);
   const rows = linkedDocuments.length
