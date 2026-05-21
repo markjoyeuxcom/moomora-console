@@ -154,9 +154,9 @@ function renderProjectButtons(activeProject, projects) {
   const newBtn = `
           <button class="nav-button nav-button--accent" type="button" data-action="new-project"><span>[+] new project</span></button>`;
   const manageBtn = `
-          <button class="nav-button nav-button--accent" type="button" data-action="open-project-manager"><span>[≡] manage projects</span></button>`;
+          <button class="nav-button nav-button--accent" type="button" data-action="open-project-manager"><span>[≡] manage</span></button>`;
   const archivedBtn = `
-          <button class="nav-button nav-button--accent" type="button" data-action="open-archived-projects"><span>[▤] archived projects</span></button>`;
+          <button class="nav-button nav-button--accent" type="button" data-action="open-archived-projects"><span>[▤] archived</span></button>`;
   const allBtn = `
           <button class="nav-button${allActive ? ' is-active' : ''}" type="button" aria-pressed="${allActive}" data-project="all">
             <span>All projects</span>
