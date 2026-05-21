@@ -1963,7 +1963,10 @@ async function init() {
         }
       },
       escape() {
-        const closer = app.querySelector('[data-action="close-task-form"], [data-action="close-document-form"], [data-action="close-admin"], [data-action="close-settings"], [data-action="close-link-picker"], [data-action="back-to-manager"], [data-action="close-project-manager"]');
+        // The archive dialog mounts on top of the manager, so handle it first:
+        // Escape backs out of the archive before closing the manager beneath it.
+        if (state.isProjectArchiveOpen) { app.querySelector('[data-action="back-to-manager"]')?.click(); return; }
+        const closer = app.querySelector('[data-action="close-task-form"], [data-action="close-document-form"], [data-action="close-admin"], [data-action="close-settings"], [data-action="close-link-picker"], [data-action="close-project-manager"]');
         if (closer) { closer.click(); return; }
         if (state.isDrawerOpen) { app.querySelector('[data-action="toggle-drawer"]')?.click(); return; }
         if (state.mobileDetailOpen) { app.querySelector('[data-action="close-mobile-detail"]')?.click(); return; }
