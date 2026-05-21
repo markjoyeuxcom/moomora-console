@@ -23,6 +23,16 @@ test('renderSettingsPanelHtml renders appearance controls and local storage note
   assert.match(html, /data-action="reset-preferences"/);
 });
 
+test('renderSettingsPanelHtml renders the board density control', () => {
+  const html = renderSettingsPanelHtml({
+    preferences: { fontScale: 'comfortable', palette: 'console', boardDensity: 'compact' },
+  });
+  assert.match(html, /Board Density/);
+  assert.match(html, /data-settings-board-density="comfortable"/);
+  assert.match(html, /data-settings-board-density="compact"/);
+  assert.match(html, /data-settings-board-density="compact"[^>]*aria-pressed="true"/);
+});
+
 test('renderSettingsPanelHtml marks selected font scale and palette', () => {
   const html = renderSettingsPanelHtml({
     preferences: { fontScale: 'large', palette: 'daylight' },

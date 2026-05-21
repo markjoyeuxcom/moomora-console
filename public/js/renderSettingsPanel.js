@@ -1,4 +1,4 @@
-import { DEFAULT_PREFERENCES, FONT_SCALE_OPTIONS, PALETTE_OPTIONS, normalizePreferences } from './preferences.js';
+import { BOARD_DENSITY_OPTIONS, DEFAULT_PREFERENCES, FONT_SCALE_OPTIONS, PALETTE_OPTIONS, normalizePreferences } from './preferences.js';
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -28,6 +28,10 @@ function renderFontScaleButton(value, activeValue) {
   return `<button class="settings-choice settings-choice--font" type="button" data-settings-font-scale="${escapeHtml(value)}"${selected(value, activeValue)}>${escapeHtml(labelFromValue(value))}</button>`;
 }
 
+function renderDensityButton(value, activeValue) {
+  return `<button class="settings-choice settings-choice--font" type="button" data-settings-board-density="${escapeHtml(value)}"${selected(value, activeValue)}>${escapeHtml(labelFromValue(value))}</button>`;
+}
+
 function paletteDescription(value) {
   if (value === 'graphite') return 'Neutral dark, less blue';
   if (value === 'daylight') return 'GitHub-like light mode';
@@ -53,6 +57,15 @@ function renderAppearance(preferences) {
       </div>
       <div class="settings-choice-row" aria-label="Interface size">
         ${FONT_SCALE_OPTIONS.map(value => renderFontScaleButton(value, preferences.fontScale)).join('')}
+      </div>
+    </section>
+    <section class="settings-section" aria-labelledby="settings-density-title">
+      <div>
+        <h3 id="settings-density-title">Board Density</h3>
+        <p>Card spacing on the board. Compact fits more cards without hiding signals.</p>
+      </div>
+      <div class="settings-choice-row" aria-label="Board density">
+        ${BOARD_DENSITY_OPTIONS.map(value => renderDensityButton(value, preferences.boardDensity)).join('')}
       </div>
     </section>
     <section class="settings-section" aria-labelledby="settings-palette-title">
