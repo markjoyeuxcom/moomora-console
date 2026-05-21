@@ -3306,9 +3306,11 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
 
 /* Board grouping toolbar */
 .board-toolbar { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
-.board-toolbar__label { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; }
+.board-toolbar__label { font-family: var(--font-mono); font-size: 0.7857rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; }
 .board-toolbar__group { display: inline-flex; border: 1px solid var(--border); }
-.board-toolbar__option { font-family: var(--font-mono); font-size: 0.78rem; padding: 4px 12px; background: transparent; color: var(--text-dim); border: 0; cursor: pointer; }
+.board-toolbar__option { font-family: var(--font-mono); font-size: 0.7857rem; padding: 4px 12px; background: transparent; color: var(--text-dim); border: 0; border-right: 1px solid var(--border); cursor: pointer; }
+.board-toolbar__option:last-child { border-right: 0; }
+.board-toolbar__option:hover { color: var(--text); }
 .board-toolbar__option[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
 
 /* Project swimlanes */
