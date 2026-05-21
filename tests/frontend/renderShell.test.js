@@ -23,7 +23,7 @@ test('renderShellHtml renders All-projects button active when activeProject is "
   assert.match(html, /data-action="new-project"/);
   assert.match(html, /data-action="open-project-manager"/);
   // Standard shell elements still present
-  assert.match(html, /Today/);
+  assert.match(html, /Tasks/);
   assert.match(html, /Moomora Console/);
   assert.match(html, /aria-label="Moomora Console navigation"/);
   assert.match(html, /Board/);
@@ -154,9 +154,9 @@ test('shell renders a status footer with breadcrumb, sync, and mode tag', () => 
   });
   assert.match(html, /class="status-footer"/);
   assert.match(html, /class="status-footer__breadcrumb"/);
-  assert.match(html, /moomora.*today.*homelab/i);
+  assert.match(html, /moomora.*tasks.*homelab/i);
   assert.match(html, /class="status-footer__sync"/);
-  assert.match(html, /class="status-footer__mode">&lt;TODAY&gt;/);
+  assert.match(html, /class="status-footer__mode">&lt;TASKS&gt;/);
 });
 
 test('shell topbar renders bracket-style Admin and primary action buttons', () => {

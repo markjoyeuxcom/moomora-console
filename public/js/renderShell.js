@@ -1,8 +1,8 @@
 const viewButtons = [
   {
     id: 'list',
-    label: 'Today',
-    heading: 'Today',
+    label: 'Tasks',
+    heading: 'Tasks',
     description: 'Coordinate urgent work, homelab maintenance, and operational follow-through from one calm queue.',
   },
   {
@@ -59,7 +59,7 @@ function viewFor(activeView) {
 
 function modeTagFor(activeView) {
   const tags = {
-    list: 'TODAY',
+    list: 'TASKS',
     board: 'BOARD',
     backlog: 'BACKLOG',
     archive: 'ARCHIVE',
@@ -113,7 +113,7 @@ function renderHamburgerDrawer({ activeProject, projects, isDrawerOpen, apiStatu
 function renderBottomNav(activeView) {
   const newAction = activeView === 'library' ? 'new-document' : 'new-task';
   const slots = [
-    { key: 'list',    glyph: 'T', label: 'today',   view: 'list',    action: null },
+    { key: 'list',    glyph: 'T', label: 'tasks',   view: 'list',    action: null },
     { key: 'board',   glyph: 'B', label: 'board',   view: 'board',   action: null },
     { key: 'new',     glyph: '+', label: '',        view: null,      action: newAction },
     { key: 'library', glyph: 'L', label: 'library', view: 'library', action: null },
