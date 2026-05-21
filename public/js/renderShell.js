@@ -91,7 +91,7 @@ function renderHamburgerDrawer({ activeProject, projects, isDrawerOpen, apiStatu
            <button class="hamburger-drawer__item${allActive ? ' is-active' : ''}" type="button" data-project="all">all projects</button>
            ${projects.map(p => `<button class="hamburger-drawer__item${p.id === activeProject ? ' is-active' : ''}" type="button" data-project="${escapeHtml(p.id)}">${escapeHtml(p.name)}</button>`).join('')}
            <button class="hamburger-drawer__item" type="button" data-action="new-project">[+] new project</button>
-           <button class="hamburger-drawer__item" type="button" data-action="open-project-manager">manage</button>
+           <button class="hamburger-drawer__item hamburger-drawer__item--manage" type="button" data-action="open-project-manager">[≡] manage projects</button>
          </div>
          <div class="hamburger-drawer__group">
            <p class="hamburger-drawer__label">// ADMIN</p>
@@ -164,7 +164,7 @@ function renderProjectButtons(activeProject, projects) {
           </button>`;
   }).join('');
   const manageBtn = `
-          <button class="nav-button nav-button--quiet" type="button" data-action="open-project-manager"><span>manage</span></button>`;
+          <button class="nav-button nav-button--quiet nav-button--manage" type="button" data-action="open-project-manager"><span>[≡] manage projects</span></button>`;
   return newBtn + allBtn + projectBtns + manageBtn;
 }
 
