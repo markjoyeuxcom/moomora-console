@@ -83,3 +83,12 @@ test('renderTaskDetailHtml renders notes read-only when readOnly', () => {
   assert.doesNotMatch(html, /data-action="save-task-notes"/);
   assert.match(html, /archived note/);
 });
+
+test('renderNotes escapes HTML-special characters in notes', () => {
+  const html = renderTaskDetailHtml(
+    { id: 't1', title: 'X', status: 'planned', priority: 'low', notes: '</textarea><script>alert(1)</script>' },
+    {},
+  );
+  assert.doesNotMatch(html, /<script>/);
+  assert.match(html, /&lt;\/textarea&gt;/);
+});

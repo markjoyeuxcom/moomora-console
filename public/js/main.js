@@ -358,10 +358,10 @@ function renderWorkspace() {
   workspace.querySelector('[data-action="save-task-notes"]')?.addEventListener('click', async () => {
     const textarea = workspace.querySelector('[data-task-notes]');
     if (!textarea) return;
-    const task = selectedTask();
-    if (!task) return;
+    const taskToSave = selectedTask();
+    if (!taskToSave) return;
     try {
-      const updated = normalizeTask(await updateTask(task.id, { notes: textarea.value }));
+      const updated = normalizeTask(await updateTask(taskToSave.id, { notes: textarea.value }));
       setState({ tasks: state.tasks.map((t) => (t.id === updated.id ? updated : t)) });
       renderWorkspace();
     } catch {
