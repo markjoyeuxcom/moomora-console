@@ -70,6 +70,13 @@ test('renderShellHtml includes new-project and open-project-manager controls', (
   assert.match(html, /data-action="open-project-manager"/);
 });
 
+test('renderShellHtml exposes manage and archived projects as topbar actions', () => {
+  const html = renderShellHtml({ activeProject: 'all', projects: [] });
+  // Both project-management controls live in the topbar action group.
+  assert.match(html, /class="topbar-actions">[\s\S]*data-action="open-project-manager"/);
+  assert.match(html, /class="topbar-actions">[\s\S]*data-action="open-archived-projects"/);
+});
+
 // ---------------------------------------------------------------------------
 // Existing tests updated to pass activeProject / projects instead of activeContext
 // ---------------------------------------------------------------------------

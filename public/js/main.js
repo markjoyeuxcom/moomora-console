@@ -1301,6 +1301,26 @@ function bindShellEvents() {
     });
   });
 
+  app.querySelectorAll('[data-action="open-archived-projects"]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      try {
+        const managed = await fetchProjects('all');
+        // Open the archive directly, with the manager layered underneath so the
+        // dialog's [<] back returns to Manage rather than the bare app.
+        setState({
+          isProjectManagerOpen: true,
+          isProjectArchiveOpen: true,
+          managedProjects: managed,
+          projectManagerError: '',
+          isDrawerOpen: false,
+        });
+        renderApp();
+      } catch {
+        window.alert('Moomora Console could not load projects.');
+      }
+    });
+  });
+
   app.querySelectorAll('[data-view]').forEach((button) => {
     button.addEventListener('click', async () => {
       const nextView = button.dataset.view;

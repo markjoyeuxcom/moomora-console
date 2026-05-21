@@ -92,6 +92,7 @@ function renderHamburgerDrawer({ activeProject, projects, isDrawerOpen, apiStatu
            ${projects.map(p => `<button class="hamburger-drawer__item${p.id === activeProject ? ' is-active' : ''}" type="button" data-project="${escapeHtml(p.id)}">${escapeHtml(p.name)}</button>`).join('')}
            <button class="hamburger-drawer__item" type="button" data-action="new-project">[+] new project</button>
            <button class="hamburger-drawer__item hamburger-drawer__item--manage" type="button" data-action="open-project-manager">[≡] manage projects</button>
+           <button class="hamburger-drawer__item" type="button" data-action="open-archived-projects">[▤] archived projects</button>
          </div>
          <div class="hamburger-drawer__group">
            <p class="hamburger-drawer__label">// ADMIN</p>
@@ -163,9 +164,7 @@ function renderProjectButtons(activeProject, projects) {
             <span>${escapeHtml(project.name)}</span>
           </button>`;
   }).join('');
-  const manageBtn = `
-          <button class="nav-button nav-button--quiet nav-button--manage" type="button" data-action="open-project-manager"><span>[≡] manage projects</span></button>`;
-  return newBtn + allBtn + projectBtns + manageBtn;
+  return newBtn + allBtn + projectBtns;
 }
 
 function renderMetricCards(metrics) {
@@ -244,6 +243,8 @@ export function renderShellHtml({
             <input type="search" placeholder="${isLibraryView ? 'Search documents' : 'Search tasks'}" autocomplete="off" value="${escapeHtml(searchQuery)}" data-search-input>
           </label>
           <div class="topbar-actions">
+            <button type="button" data-action="open-project-manager" class="bracket-button">[≡] manage</button>
+            <button type="button" data-action="open-archived-projects" class="bracket-button">[▤] archived</button>
             <button type="button" data-action="open-settings" class="bracket-button">[~] settings</button>
             <button type="button" data-action="open-admin" class="bracket-button">[a] admin</button>
             ${isLibraryView ? '<button type="button" data-action="import-document" class="bracket-button">[↑] import</button>' : ''}
