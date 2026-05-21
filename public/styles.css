@@ -2976,6 +2976,19 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
   }
 }
 
+/* Laptop range: there isn't room for the 5-column board and the detail panel
+   side-by-side (the board needs ~950px on its own), so the panel overlapped the
+   board. Stack the detail beneath a full-width board, and let the board scroll
+   horizontally on the narrower screens in this range where 5 columns won't fit. */
+@media (min-width: 1024px) and (max-width: 1599px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .board-panel {
+    overflow-x: auto;
+  }
+}
+
 /* ============================================================
    Linked docs section (task detail panel)
    ============================================================ */
