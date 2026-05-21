@@ -1707,6 +1707,33 @@ test('GET /api/tasks/:id/activity records an archived event after DELETE', async
   await app.close();
 });
 
+test('GET /api/tasks/:id/activity records a restored event after restore', async () => {
+  const repository = createFakeRepository();
+  await repository.archiveTask(TASK_ID);
+  const app = await buildApp({
+    skipDb: true,
+    tasksRepository: repository,
+    projectsRepository: createFakeProjectsRepository(),
+  });
+
+  const restored = await app.inject({
+    method: 'PATCH',
+    url: `/api/tasks/${TASK_ID}/restore`,
+  });
+  assert.equal(restored.statusCode, 200);
+
+  const response = await app.inject({
+    method: 'GET',
+    url: `/api/tasks/${TASK_ID}/activity`,
+  });
+
+  assert.equal(response.statusCode, 200);
+  const events = response.json();
+  assert.ok(events.some(event => event.eventType === 'restored'));
+
+  await app.close();
+});
+
 test('GET /api/tasks/:id/activity rejects malformed task id', async () => {
   const app = await buildApp({
     skipDb: true,
