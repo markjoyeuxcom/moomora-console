@@ -3303,3 +3303,20 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
 .archive-row__name { font-weight: 600; }
 .archive-row__actions { display: flex; gap: 6px; }
 .project-archive__empty { color: var(--text-dimmer); font-size: 0.85rem; padding: 6px 2px; list-style: none; }
+
+/* Board grouping toolbar */
+.board-toolbar { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
+.board-toolbar__label { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; }
+.board-toolbar__group { display: inline-flex; border: 1px solid var(--border); }
+.board-toolbar__option { font-family: var(--font-mono); font-size: 0.78rem; padding: 4px 12px; background: transparent; color: var(--text-dim); border: 0; cursor: pointer; }
+.board-toolbar__option[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+
+/* Project swimlanes */
+.board-swimlanes { display: grid; gap: 14px; }
+.board-lane { border: 1px solid var(--border); background: var(--bg-deep); }
+.board-lane__header { border-bottom: 1px solid var(--border); background: var(--surface-warm); }
+.board-lane__toggle { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; background: transparent; border: 0; color: var(--text); cursor: pointer; text-align: left; }
+.board-lane__glyph { color: var(--text-dim); }
+.board-lane__name { font-family: var(--font-mono); font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.board-lane__count { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent-amber); }
+.board-lane .board-panel { padding: 10px; background: transparent; }
