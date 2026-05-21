@@ -166,8 +166,8 @@ function renderProjectButtons(activeProject, projects) {
   }).join('');
   const footer = `
           <div class="side-nav__footer">
-            <button class="bracket-button bracket-button--quiet" type="button" data-action="open-project-manager">[≡] manage</button>
-            <button class="bracket-button bracket-button--quiet" type="button" data-action="open-archived-projects">[▤] archived</button>
+            <button class="bracket-button bracket-button--quiet" type="button" data-action="open-project-manager">[≡] manage projects</button>
+            <button class="bracket-button bracket-button--quiet" type="button" data-action="open-archived-projects">[▤] archived projects</button>
           </div>`;
   return newBtn + allBtn + projectBtns + footer;
 }
