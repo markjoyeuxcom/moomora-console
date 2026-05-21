@@ -1,6 +1,7 @@
 import { state, setState, loadActiveProject, persistActiveProject } from './state.js';
-import { fetchProjects, createProject, updateProject, deleteProjectPermanent } from './projectApi.js';
+import { fetchProjects, createProject, updateProject, archiveProject, deleteProjectPermanent } from './projectApi.js';
 import { renderProjectManagerHtml } from './renderProjectManager.js';
+import { renderProjectArchiveHtml } from './renderProjectArchive.js';
 import {
   archiveTask,
   createTask,
@@ -1111,8 +1112,18 @@ function renderApp() {
     }));
   }
   if (state.isProjectManagerOpen) {
+    const liveProjects = state.managedProjects.filter((p) => p.status !== 'archived');
+    const archivedCount = state.managedProjects.length - liveProjects.length;
     app.insertAdjacentHTML('beforeend', renderProjectManagerHtml({
-      projects: state.managedProjects,
+      projects: liveProjects,
+      archivedCount,
+      error: state.projectManagerError,
+    }));
+  }
+  if (state.isProjectArchiveOpen) {
+    const archivedProjects = state.managedProjects.filter((p) => p.status === 'archived');
+    app.insertAdjacentHTML('beforeend', renderProjectArchiveHtml({
+      projects: archivedProjects,
       error: state.projectManagerError,
     }));
   }
@@ -1134,6 +1145,7 @@ function renderApp() {
   bindDocumentFormEvents();
   bindAdminPanelEvents();
   bindProjectManagerEvents();
+  bindProjectArchiveEvents();
   bindSettingsPanelEvents();
   bindLinkPickerEvents();
 }
@@ -1634,6 +1646,64 @@ function bindProjectManagerEvents() {
   panel.querySelectorAll('[data-action="manager-move-down"]').forEach((button) => {
     button.addEventListener('click', () => move(button.dataset.projectId, 'down'));
   });
+
+  panel.querySelectorAll('[data-action="manager-archive"]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      try {
+        await archiveProject(button.dataset.projectId);
+        await refreshProjectManager();
+      } catch {
+        setState({ projectManagerError: 'Could not archive that project.' });
+        renderApp();
+      }
+    });
+  });
+
+  panel.querySelector('[data-action="open-project-archive"]')?.addEventListener('click', () => {
+    setState({ isProjectArchiveOpen: true, projectManagerError: '' });
+    renderApp();
+  });
+}
+
+function bindProjectArchiveEvents() {
+  const panel = app.querySelector('[data-project-archive]');
+  if (!panel) return;
+
+  panel.querySelectorAll('[data-action="back-to-manager"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      setState({ isProjectArchiveOpen: false, projectManagerError: '' });
+      renderApp();
+    });
+  });
+  panel.querySelector('[data-action="close-project-archive"]')?.addEventListener('click', () => {
+    setState({ isProjectArchiveOpen: false, isProjectManagerOpen: false, projectManagerError: '' });
+    renderApp();
+  });
+
+  panel.querySelectorAll('[data-action="archive-restore"]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      try {
+        await updateProject(button.dataset.projectId, { status: 'active' });
+        await refreshProjectManager();
+      } catch {
+        setState({ projectManagerError: 'Could not restore that project.' });
+        renderApp();
+      }
+    });
+  });
+
+  panel.querySelectorAll('[data-action="archive-delete"]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      if (!window.confirm('Permanently delete this archived project? Only empty projects can be deleted.')) return;
+      try {
+        await deleteProjectPermanent(button.dataset.projectId);
+        await refreshProjectManager();
+      } catch {
+        setState({ projectManagerError: 'Could not delete: the project still has tasks or documents.' });
+        renderApp();
+      }
+    });
+  });
 }
 
 function updatePreferences(nextPreferences) {
@@ -1893,7 +1963,7 @@ async function init() {
         }
       },
       escape() {
-        const closer = app.querySelector('[data-action="close-task-form"], [data-action="close-document-form"], [data-action="close-admin"], [data-action="close-settings"], [data-action="close-link-picker"], [data-action="close-project-manager"]');
+        const closer = app.querySelector('[data-action="close-task-form"], [data-action="close-document-form"], [data-action="close-admin"], [data-action="close-settings"], [data-action="close-link-picker"], [data-action="back-to-manager"], [data-action="close-project-manager"]');
         if (closer) { closer.click(); return; }
         if (state.isDrawerOpen) { app.querySelector('[data-action="toggle-drawer"]')?.click(); return; }
         if (state.mobileDetailOpen) { app.querySelector('[data-action="close-mobile-detail"]')?.click(); return; }

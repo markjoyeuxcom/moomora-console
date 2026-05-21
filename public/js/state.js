@@ -15,6 +15,7 @@ export const state = {
   mobileDetailOpen: false,
   isAdminPanelOpen: false,
   isProjectManagerOpen: false,
+  isProjectArchiveOpen: false,
   managedProjects: [],
   projectManagerError: '',
   isSettingsPanelOpen: false,
