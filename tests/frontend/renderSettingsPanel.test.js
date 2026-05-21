@@ -31,6 +31,7 @@ test('renderSettingsPanelHtml renders the board density control', () => {
   assert.match(html, /data-settings-board-density="comfortable"/);
   assert.match(html, /data-settings-board-density="compact"/);
   assert.match(html, /data-settings-board-density="compact"[^>]*aria-pressed="true"/);
+  assert.match(html, /data-settings-board-density="comfortable"[^>]*aria-pressed="false"/);
 });
 
 test('renderSettingsPanelHtml marks selected font scale and palette', () => {

@@ -29,7 +29,7 @@ function renderFontScaleButton(value, activeValue) {
 }
 
 function renderDensityButton(value, activeValue) {
-  return `<button class="settings-choice settings-choice--font" type="button" data-settings-board-density="${escapeHtml(value)}"${selected(value, activeValue)}>${escapeHtml(labelFromValue(value))}</button>`;
+  return `<button class="settings-choice settings-choice--density" type="button" data-settings-board-density="${escapeHtml(value)}"${selected(value, activeValue)}>${escapeHtml(labelFromValue(value))}</button>`;
 }
 
 function paletteDescription(value) {
@@ -80,7 +80,7 @@ function renderAppearance(preferences) {
     <section class="settings-section settings-section--inline" aria-labelledby="settings-reset-title">
       <div>
         <h3 id="settings-reset-title">Reset Preferences</h3>
-        <p>Return to ${escapeHtml(labelFromValue(DEFAULT_PREFERENCES.fontScale))} size and ${escapeHtml(labelFromValue(DEFAULT_PREFERENCES.palette))} palette.</p>
+        <p>Return to ${escapeHtml(labelFromValue(DEFAULT_PREFERENCES.fontScale))} size, ${escapeHtml(labelFromValue(DEFAULT_PREFERENCES.boardDensity))} board density, and ${escapeHtml(labelFromValue(DEFAULT_PREFERENCES.palette))} palette.</p>
       </div>
       <button class="danger-action" type="button" data-action="reset-preferences">Reset</button>
     </section>`;
