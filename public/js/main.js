@@ -1777,6 +1777,16 @@ function bindSettingsPanelEvents() {
     });
   });
 
+  panel.querySelectorAll('[data-settings-board-density]').forEach((button) => {
+    button.addEventListener('click', () => {
+      updatePreferences({
+        ...state.preferences,
+        boardDensity: button.dataset.settingsBoardDensity,
+      });
+      renderApp();
+    });
+  });
+
   panel.querySelector('[data-action="reset-preferences"]')?.addEventListener('click', () => {
     const preferences = resetPreferences();
     applyPreferences(preferences);

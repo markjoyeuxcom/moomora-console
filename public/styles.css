@@ -1011,6 +1011,13 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
   letter-spacing: 0.02em;
 }
 
+/* Compact board density: tighter cards, all signals still visible. */
+:root[data-board-density="compact"] .board-cards { gap: 6px; }
+:root[data-board-density="compact"] .board-card { padding: 5px 9px; gap: 3px; }
+:root[data-board-density="compact"] .board-card .board-card__title { font-size: 0.85rem; }
+:root[data-board-density="compact"] .board-card .board-card__due,
+:root[data-board-density="compact"] .board-card .board-card__chip { font-size: 0.7rem; }
+
 .board-empty {
   padding: 16px 8px;
   color: var(--text-dimmer);
