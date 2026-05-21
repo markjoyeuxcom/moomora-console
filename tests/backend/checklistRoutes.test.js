@@ -34,6 +34,8 @@ test('checklist add/list/toggle/delete round-trip', async () => {
   assert.equal(patch.json().completed, true);
   const del = await app.inject({ method: 'DELETE', url: `/api/tasks/${TASK}/checklist/${itemId}` });
   assert.equal(del.statusCode, 204);
+  const listAfter = await app.inject({ method: 'GET', url: `/api/tasks/${TASK}/checklist` });
+  assert.equal(listAfter.json().length, 0);
   await app.close();
 });
 
@@ -41,5 +43,19 @@ test('GET /api/tasks/:id/checklist rejects an invalid task id', async () => {
   const app = await appWith(fakeChecklistRepo());
   const res = await app.inject({ method: 'GET', url: '/api/tasks/not-a-uuid/checklist' });
   assert.equal(res.statusCode, 400);
+  await app.close();
+});
+
+test('PATCH returns 404 for an unknown checklist item', async () => {
+  const app = await appWith(fakeChecklistRepo());
+  const res = await app.inject({ method: 'PATCH', url: `/api/tasks/${TASK}/checklist/${randomUUID()}`, payload: { completed: true } });
+  assert.equal(res.statusCode, 404);
+  await app.close();
+});
+
+test('DELETE returns 404 for an unknown checklist item', async () => {
+  const app = await appWith(fakeChecklistRepo());
+  const res = await app.inject({ method: 'DELETE', url: `/api/tasks/${TASK}/checklist/${randomUUID()}` });
+  assert.equal(res.statusCode, 404);
   await app.close();
 });
