@@ -18,6 +18,10 @@ export function buildListChecklist(taskId) {
 }
 
 export function buildAddChecklistItem(taskId, label) {
+  // sort_order is derived from the current max within a single INSERT. This is
+  // not serialized, so two concurrent adds for the same task could collide on
+  // sort_order — acceptable for this single-user console where list/order is a
+  // best-effort display concern, not a uniqueness constraint.
   return {
     text: `
       insert into task_checklist_items (task_id, label, sort_order)
