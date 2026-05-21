@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import { buildApp } from '../../server/index.js';
 
 const TASK = '11111111-1111-4111-8111-111111111111';
@@ -7,7 +8,7 @@ function fakeChecklistRepo() {
   let items = [];
   return {
     async listChecklist() { return items; },
-    async addChecklistItem(taskId, label) { const it = { id: 'i' + (items.length + 1), taskId, label, completed: false, sortOrder: items.length }; items.push(it); return it; },
+    async addChecklistItem(taskId, label) { const it = { id: randomUUID(), taskId, label, completed: false, sortOrder: items.length }; items.push(it); return it; },
     async setChecklistItemCompleted(id, completed) { const it = items.find(x => x.id === id); if (!it) return null; it.completed = completed; return it; },
     async deleteChecklistItem(id) { const i = items.findIndex(x => x.id === id); if (i < 0) return null; return items.splice(i, 1)[0]; },
     _items: () => items,

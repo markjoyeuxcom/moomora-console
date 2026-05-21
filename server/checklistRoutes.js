@@ -20,7 +20,7 @@ export async function registerChecklistRoutes(app, options = {}) {
   });
 
   app.patch('/api/tasks/:taskId/checklist/:itemId', async (request, reply) => {
-    if (!isUuid(request.params.taskId)) { reply.code(400); return { message: 'task id is invalid' }; }
+    if (!isUuid(request.params.taskId) || !isUuid(request.params.itemId)) { reply.code(400); return { message: 'id is invalid' }; }
     if (typeof request.body?.completed !== 'boolean') { reply.code(400); return { message: 'completed must be a boolean' }; }
     const item = await repository.setChecklistItemCompleted(request.params.itemId, request.body.completed);
     if (!item) { reply.code(404); return { message: 'checklist item not found' }; }
@@ -28,7 +28,7 @@ export async function registerChecklistRoutes(app, options = {}) {
   });
 
   app.delete('/api/tasks/:taskId/checklist/:itemId', async (request, reply) => {
-    if (!isUuid(request.params.taskId)) { reply.code(400); return { message: 'task id is invalid' }; }
+    if (!isUuid(request.params.taskId) || !isUuid(request.params.itemId)) { reply.code(400); return { message: 'id is invalid' }; }
     const removed = await repository.deleteChecklistItem(request.params.itemId);
     if (!removed) { reply.code(404); return { message: 'checklist item not found' }; }
     reply.code(204);
