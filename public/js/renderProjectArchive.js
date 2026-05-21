@@ -30,7 +30,7 @@ export function renderProjectArchiveHtml({ projects = [], error = '' } = {}) {
               <h2 id="project-archive-title">Archived projects</h2>
               <p>Restore a project to active, or permanently delete an empty one.</p>
             </div>
-            <button class="modal-header__close bracket-button bracket-button--quiet" type="button" data-action="back-to-manager" aria-label="Back to projects">[<] back</button>
+            <button class="modal-header__close bracket-button bracket-button--quiet" type="button" data-action="back-to-manager" aria-label="Back to projects">[&lt;] back</button>
           </div>
           <div class="modal-header--mobile">
             <button class="modal-header__cancel bracket-button bracket-button--quiet" type="button" data-action="back-to-manager">back</button>

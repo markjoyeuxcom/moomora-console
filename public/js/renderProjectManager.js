@@ -41,8 +41,16 @@ function renderProjectRow(project) {
     </li>`;
 }
 
+function effectiveStatus(status) {
+  // Archived never belongs to a live group (it lives in the Archive dialog).
+  // Any other unrecognised status falls back to 'active', matching the
+  // status-select default so the project still appears and is editable.
+  if (status === 'archived') return 'archived';
+  return STATUS_GROUPS.some(g => g.value === status) ? status : 'active';
+}
+
 function renderGroup(group, projects) {
-  const inGroup = projects.filter(p => (STATUS_GROUPS.some(g => g.value === p.status) ? p.status : 'active') === group.value);
+  const inGroup = projects.filter(p => effectiveStatus(p.status) === group.value);
   if (inGroup.length === 0) return '';
   return `
     <li class="project-group" data-project-group="${group.value}">
@@ -80,7 +88,7 @@ export function renderProjectManagerHtml({ projects = [], archivedCount = 0, err
           <ul class="project-manager__groups">
             ${groups || '<li class="project-manager__empty">No projects yet — add one above.</li>'}
           </ul>
-          <button class="bracket-button bracket-button--quiet project-manager__archive-link" type="button" data-action="open-project-archive">🗄 archived projects · ${Number(archivedCount) || 0}</button>
+          <button class="bracket-button bracket-button--quiet project-manager__archive-link" type="button" data-action="open-project-archive">[a] archived projects · ${Number(archivedCount) || 0}</button>
         </div>
       </section>
     </div>`;
