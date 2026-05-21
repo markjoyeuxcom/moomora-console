@@ -221,3 +221,11 @@ test('renderTaskDetailHtml shows restore action for archived tasks', () => {
   assert.doesNotMatch(html, /data-action="edit-task"/);
   assert.doesNotMatch(html, /data-action="archive-task"/);
 });
+
+test('renderSwimlaneListHtml escapes the project name in the lane header', () => {
+  const tasks = [{ id: 't1', title: 'Alpha', priority: 'high', status: 'planned', projectId: 'p1' }];
+  const projects = [{ id: 'p1', name: '<b>"Home"</b>' }];
+  const html = renderSwimlaneListHtml(tasks, null, { projects });
+  assert.match(html, /&lt;b&gt;&quot;Home&quot;&lt;\/b&gt;/);
+  assert.doesNotMatch(html, /<b>"Home"<\/b>/);
+});

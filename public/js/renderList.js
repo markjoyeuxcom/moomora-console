@@ -111,7 +111,7 @@ export function renderSwimlaneListHtml(tasks = [], selectedTaskId = null, option
           ${isCollapsed ? '' : `<div class="task-lane__cards">${renderCards(laneTasks, selectedTaskId, options.emptyTitle, options.emptyDescription)}</div>`}
         </section>`;
       }).join('')}</div>`
-    : `<div class="task-list">${renderCards([], selectedTaskId, options.emptyTitle, options.emptyDescription)}</div>`;
+    : `<div class="task-list">${renderCards(safeTasks, selectedTaskId, options.emptyTitle, options.emptyDescription)}</div>`;
 
   return renderListPanel(body, { ...options, count: safeTasks.length });
 }
