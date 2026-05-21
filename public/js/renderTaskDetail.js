@@ -76,9 +76,9 @@ function renderChecklist(items = [], options = {}) {
         <div class="checklist-item${item.completed ? ' is-done' : ''}" data-checklist-id="${escapeHtml(item.id)}">
           ${readOnly
             ? `<span class="checklist-item__mark">${item.completed ? '[x]' : '[ ]'}</span>`
-            : `<button class="checklist-item__toggle bracket-button bracket-button--quiet" type="button" data-action="toggle-checklist-item" data-item-id="${escapeHtml(item.id)}" data-completed="${item.completed ? 'true' : 'false'}" aria-label="Toggle">${item.completed ? '[x]' : '[ ]'}</button>`}
+            : `<button class="checklist-item__toggle bracket-button bracket-button--quiet" type="button" data-action="toggle-checklist-item" data-item-id="${escapeHtml(item.id)}" data-completed="${item.completed ? 'true' : 'false'}" aria-label="${item.completed ? 'Mark incomplete' : 'Mark complete'}: ${escapeHtml(item.label || '')}">${item.completed ? '[x]' : '[ ]'}</button>`}
           <span class="checklist-item__label">${escapeHtml(item.label || '')}</span>
-          ${readOnly ? '' : `<button class="checklist-item__delete bracket-button bracket-button--quiet" type="button" data-action="delete-checklist-item" data-item-id="${escapeHtml(item.id)}" aria-label="Delete">[x]</button>`}
+          ${readOnly ? '' : `<button class="checklist-item__delete bracket-button bracket-button--quiet" type="button" data-action="delete-checklist-item" data-item-id="${escapeHtml(item.id)}" aria-label="Delete: ${escapeHtml(item.label || '')}">[x]</button>`}
         </div>`).join('')
     : '<p class="checklist__empty">No checklist items.</p>';
   const adder = readOnly ? '' : `

@@ -385,24 +385,36 @@ function renderWorkspace() {
     }
   });
 
-  workspace.querySelector('[data-action="add-checklist-item"]')?.addEventListener('click', async () => {
-    const input = workspace.querySelector('[data-checklist-new]');
+  async function submitNewChecklistItem(input) {
+    const taskId = state.selectedTaskId;
     const label = input?.value.trim();
-    if (!label) return;
+    if (!label || !taskId) return;
     try {
-      await addChecklistItem(state.selectedTaskId, label);
-      await loadTaskChecklist(state.selectedTaskId);
+      await addChecklistItem(taskId, label);
+      await loadTaskChecklist(taskId);
       renderWorkspace();
     } catch {
       window.alert('Moomora Console could not add the checklist item.');
     }
+  }
+
+  workspace.querySelector('[data-action="add-checklist-item"]')?.addEventListener('click', () => {
+    submitNewChecklistItem(workspace.querySelector('[data-checklist-new]'));
+  });
+
+  workspace.querySelector('[data-checklist-new]')?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    submitNewChecklistItem(event.target);
   });
 
   workspace.querySelectorAll('[data-action="toggle-checklist-item"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
+      const taskId = state.selectedTaskId;
+      if (!taskId) return;
       try {
-        await setChecklistItem(state.selectedTaskId, btn.dataset.itemId, btn.dataset.completed !== 'true');
-        await loadTaskChecklist(state.selectedTaskId);
+        await setChecklistItem(taskId, btn.dataset.itemId, btn.dataset.completed !== 'true');
+        await loadTaskChecklist(taskId);
         renderWorkspace();
       } catch {
         window.alert('Moomora Console could not update the checklist item.');
@@ -412,9 +424,11 @@ function renderWorkspace() {
 
   workspace.querySelectorAll('[data-action="delete-checklist-item"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
+      const taskId = state.selectedTaskId;
+      if (!taskId) return;
       try {
-        await deleteChecklistItem(state.selectedTaskId, btn.dataset.itemId);
-        await loadTaskChecklist(state.selectedTaskId);
+        await deleteChecklistItem(taskId, btn.dataset.itemId);
+        await loadTaskChecklist(taskId);
         renderWorkspace();
       } catch {
         window.alert('Moomora Console could not delete the checklist item.');
