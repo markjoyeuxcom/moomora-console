@@ -63,7 +63,7 @@ export const state = {
   boardLaneCollapsed: {},        // { [projectId]: true } collapsed lanes (session-only)
   boardFilters: [],              // active Board focus chips (session-only)
   taskBoardExtras: {},           // { [taskId]: { docsCount, checklistDone, checklistTotal, nextChecklistItem, latestActivity } }
-  taskBoardExtrasLoading: {},    // { [taskId]: true } requests currently in flight
+  taskBoardExtrasLoading: {},    // { [taskId]: token } requests currently in flight
   listGrouping: 'flat',         // 'flat' | 'swimlanes' (All-projects Tasks view only)
   listLaneCollapsed: {},         // { [projectId]: true } collapsed list lanes (session-only)
 };

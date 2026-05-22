@@ -75,8 +75,10 @@ const SAVED_LIBRARY_VIEWS_KEY = 'moomora.librarySavedViews.v1';
 const LIBRARY_BROWSER_WIDTH_KEY = 'moomora.libraryBrowserWidth.v1';
 const LIBRARY_CONTROLS_KEY = 'moomora.libraryControls.v1';
 const DOCUMENT_AUTOSAVE_DELAY_MS = 1200;
+const BOARD_EXTRA_FETCH_CONCURRENCY = 4;
 let documentAutosaveTimer = null;
 let isSavingDocumentDraft = false;
+let boardExtraRequestSequence = 0;
 
 function today() {
   const now = new Date();
@@ -285,11 +287,30 @@ async function fetchTaskBoardExtra(taskId) {
   return boardExtraFromResults(docsResult, checklistResult, activityResult);
 }
 
+function nextBoardExtraRequestToken(taskId) {
+  boardExtraRequestSequence += 1;
+  return `${taskId}:${boardExtraRequestSequence}`;
+}
+
+async function fetchTaskBoardExtraEntries(taskIds, tokens) {
+  const entries = [];
+  for (let index = 0; index < taskIds.length; index += BOARD_EXTRA_FETCH_CONCURRENCY) {
+    const batch = taskIds.slice(index, index + BOARD_EXTRA_FETCH_CONCURRENCY);
+    const batchEntries = await Promise.all(
+      batch.map(async id => [id, tokens[id], await fetchTaskBoardExtra(id)]),
+    );
+    entries.push(...batchEntries);
+  }
+  return entries;
+}
+
 function clearTaskBoardExtra(taskId) {
-  if (!taskId || !state.taskBoardExtras?.[taskId]) return;
+  if (!taskId) return;
   const nextExtras = { ...state.taskBoardExtras };
+  const nextLoading = { ...state.taskBoardExtrasLoading };
   delete nextExtras[taskId];
-  setState({ taskBoardExtras: nextExtras });
+  delete nextLoading[taskId];
+  setState({ taskBoardExtras: nextExtras, taskBoardExtrasLoading: nextLoading });
 }
 
 async function ensureBoardExtras(tasks) {
@@ -297,19 +318,25 @@ async function ensureBoardExtras(tasks) {
   const ids = [...new Set((Array.isArray(tasks) ? tasks : []).map(task => task.id).filter(Boolean))];
   const needed = ids.filter(id => !state.taskBoardExtras?.[id] && !state.taskBoardExtrasLoading?.[id]);
   if (!needed.length) return;
+  const tokens = Object.fromEntries(needed.map(id => [id, nextBoardExtraRequestToken(id)]));
 
   setState({
     taskBoardExtrasLoading: {
       ...state.taskBoardExtrasLoading,
-      ...Object.fromEntries(needed.map(id => [id, true])),
+      ...tokens,
     },
   });
 
-  const entries = await Promise.all(needed.map(async id => [id, await fetchTaskBoardExtra(id)]));
+  const entries = await fetchTaskBoardExtraEntries(needed, tokens);
   const loading = { ...state.taskBoardExtrasLoading };
-  needed.forEach(id => { delete loading[id]; });
+  const extras = { ...state.taskBoardExtras };
+  for (const [id, token, extra] of entries) {
+    if (loading[id] !== token) continue;
+    extras[id] = extra;
+    delete loading[id];
+  }
   setState({
-    taskBoardExtras: { ...state.taskBoardExtras, ...Object.fromEntries(entries) },
+    taskBoardExtras: extras,
     taskBoardExtrasLoading: loading,
   });
   if (state.activeView === 'board') renderWorkspace();
@@ -1188,23 +1215,25 @@ function openTouchMoveMenu(taskId, _anchorElement) {
   handleBoardDrop({ taskId, targetStatus, beforeTaskId: null });
 }
 
+function handleOpenBoardTaskDetail(event) {
+  event.preventDefault();
+  const taskId = state.selectedTaskId || selectedTask()?.id;
+  if (!taskId) return;
+  setState({
+    selectedTaskId: taskId,
+    isBoardTaskDetailOpen: true,
+    activeTaskDetailSection: 'summary',
+    activeTaskDetailTab: 'summary',
+  });
+  renderWorkspace();
+}
+
 function bindBoardEvents(workspace) {
   if (state.activeView !== 'board') return;
 
-  workspace.addEventListener('click', (event) => {
-    const openDetailButton = event.target.closest('[data-action="open-board-task-detail"]');
-    if (!openDetailButton) return;
-    event.preventDefault();
-    const taskId = state.selectedTaskId || selectedTask()?.id;
-    if (!taskId) return;
-    setState({
-      selectedTaskId: taskId,
-      isBoardTaskDetailOpen: true,
-      activeTaskDetailSection: 'summary',
-      activeTaskDetailTab: 'summary',
-    });
-    renderWorkspace();
-  });
+  const openDetailButton = workspace.querySelector('[data-action="open-board-task-detail"]');
+  openDetailButton?.removeEventListener('click', handleOpenBoardTaskDetail);
+  openDetailButton?.addEventListener('click', handleOpenBoardTaskDetail);
 
   workspace.querySelectorAll('[data-board-card]').forEach((card) => {
     card.addEventListener('dragstart', (event) => {

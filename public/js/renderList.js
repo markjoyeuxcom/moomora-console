@@ -91,10 +91,10 @@ function buildProjectLanes(tasks, projects) {
 }
 
 function laneSummary(tasks, today) {
-  const count = tasks.length;
+  const activeCount = tasks.filter(t => t.status !== 'completed').length;
   const dueToday = today ? tasks.filter(t => t.dueDate === today && t.status !== 'completed').length : 0;
   const overdue = today ? tasks.filter(t => t.dueDate && t.dueDate < today && t.status !== 'completed').length : 0;
-  const parts = [`${count} active`];
+  const parts = [`${activeCount} active`];
   if (overdue) parts.push(`${overdue} overdue`);
   else if (dueToday) parts.push(`${dueToday} due today`);
   return parts.join(' · ');

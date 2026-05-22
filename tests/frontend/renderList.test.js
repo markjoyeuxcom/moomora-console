@@ -155,7 +155,7 @@ test('renderSwimlaneListHtml summarizes due-today lane metadata', () => {
     { id: 't2', title: 'Done', priority: 'low', status: 'completed', projectId: 'p1', dueDate: '2026-05-20' },
   ];
   const html = renderSwimlaneListHtml(tasks, null, { projects: SWIMLANE_PROJECTS, today: '2026-05-20' });
-  assert.match(html, /class="task-lane__summary">2 active · 1 due today/);
+  assert.match(html, /class="task-lane__summary">1 active · 1 due today/);
 });
 
 test('renderSwimlaneListHtml only renders lanes for projects with tasks', () => {
