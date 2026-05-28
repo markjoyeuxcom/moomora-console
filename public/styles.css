@@ -397,11 +397,6 @@ html {
   margin-bottom: 10px;
 }
 
-/* legacy .metric-card shared rule — see metrics section for full style */
-.metric-card {
-  border: 1px solid var(--border);
-  background: var(--surface);
-}
 
 .status-dot {
   width: 8px;
@@ -463,6 +458,26 @@ html {
   border-bottom: 1px solid var(--border);
   background: var(--bg);
 }
+
+.topbar-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 4px 0 0;
+  white-space: nowrap;
+}
+.metric-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 16px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.metric-strip__item b { color: var(--accent-amber); font-weight: 700; margin-left: 2px; }
+.metric-strip__sep { color: var(--border-dim); }
 
 .search-field {
   flex: 1;
@@ -601,82 +616,6 @@ html {
 }
 
 .icon-action:hover { color: var(--text-body); border-color: var(--border); }
-
-/* ============================================================
-   Content header + metrics
-   ============================================================ */
-.content-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px 16px 10px;
-}
-
-.content-header h1 {
-  margin: 0;
-  color: var(--text);
-  font-size: 1.2143rem;
-  font-weight: 700;
-  letter-spacing: 0;
-  line-height: 1.2;
-}
-
-.content-header p {
-  max-width: 720px;
-  margin: 6px 0 0;
-  color: var(--text-dim);
-  font-size: 0.8571rem;
-  line-height: 1.45;
-}
-
-.sync-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 3px 8px;
-  border: 1px solid var(--accent);
-  background: color-mix(in srgb, var(--accent) 7%, transparent);
-  color: var(--accent);
-  font-size: 0.7857rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-.metrics-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  padding: 0 16px 12px;
-}
-
-.metric-card {
-  display: grid;
-  gap: 4px;
-  min-height: 60px;
-  padding: 10px 12px;
-}
-
-.metric-label {
-  color: var(--text-dimmer);
-  font-size: 0.7857rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.metric-card strong {
-  color: var(--accent-amber);
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0;
-}
-
-.metric-card strong.is-danger { color: var(--danger); }
-.metric-card strong.is-ok    { color: var(--accent); }
-.metric-card strong.is-dim   { color: var(--text-dim); }
 
 /* ============================================================
    Status footer
@@ -3020,9 +2959,6 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
     margin-inline: 12px;
   }
 
-  .metrics-row { padding-inline: 12px; }
-  .content-header { padding-inline: 12px; }
-
   .board-panel {
     grid-template-columns: repeat(3, minmax(190px, 1fr));
     overflow-x: auto;
@@ -3095,25 +3031,6 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
   }
 
   .search-field { max-width: none; }
-
-  .content-header {
-    padding: 12px 12px 8px;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .metrics-row {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 4px;
-    padding: 0 12px 8px;
-  }
-
-  .metric-card {
-    min-height: 50px;
-    padding: 7px 8px;
-  }
-
-  .metric-card strong { font-size: 1.1rem; }
 
   .status-footer { height: 22px; }
 
@@ -3596,11 +3513,6 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
 .project-row__status { background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--text-body); padding: 6px 8px; }
 .project-row__actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .project-manager__empty { color: var(--text-dimmer); font-size: 0.85rem; padding: 6px 2px; list-style: none; }
-
-/* Topbar view tabs */
-.topbar-tabs { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
-.topbar-tabs .nav-button { width: auto; min-height: 0; padding: 5px 10px; }
-@media (max-width: 1023px) { .topbar-tabs { display: none; } } /* bottom-nav covers views on mobile */
 
 /* Sidebar project action variants */
 .nav-button--accent { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
