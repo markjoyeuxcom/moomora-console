@@ -1144,6 +1144,22 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
   min-height: 56px;
 }
 
+/* The Library workspace header is the only remaining consumer of .sync-pill
+   after the content-header (which held the "Synced" pill) was removed. */
+.sync-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  color: var(--accent);
+  font-size: 0.7857rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
 .library-browser .sync-pill {
   font-size: 0.7857rem;
 }
