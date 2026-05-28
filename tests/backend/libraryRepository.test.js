@@ -43,6 +43,37 @@ test('normalizeDocumentRow maps database fields to API document fields', () => {
   });
 });
 
+test('normalizeDocumentRow surfaces projectSlug only when the project_slug column is present', () => {
+  const withoutSlug = normalizeDocumentRow({
+    id: DOCUMENT_ID,
+    title: 't',
+    body: '',
+    document_type: 'note',
+    project_id: PROJECT_UUID,
+    tags: [],
+    source_filename: null,
+    archived_at: null,
+    created_at: 'now',
+    updated_at: 'now',
+  });
+  assert.equal('projectSlug' in withoutSlug, false);
+
+  const withNullSlug = normalizeDocumentRow({
+    id: DOCUMENT_ID,
+    title: 't',
+    body: '',
+    document_type: 'note',
+    project_id: PROJECT_UUID,
+    tags: [],
+    source_filename: null,
+    archived_at: null,
+    created_at: 'now',
+    updated_at: 'now',
+    project_slug: null,
+  });
+  assert.equal(withNullSlug.projectSlug, null);
+});
+
 test('buildCreateDocument returns a parameterized insert query', () => {
   const query = buildCreateDocument({
     title: 'Ingress Notes',
@@ -152,6 +183,14 @@ test('buildListActiveDocumentsForExport scopes to a single project id', () => {
   assert.deepEqual(query.values, [PROJECT_UUID]);
 });
 
+test('buildListActiveDocumentsForExport treats empty-string and null projectId as "all"', () => {
+  for (const value of ['', null, undefined]) {
+    const query = buildListActiveDocumentsForExport({ projectId: value });
+    assert.doesNotMatch(query.text, /d\.project_id = \$/);
+    assert.deepEqual(query.values, []);
+  }
+});
+
 test('createLibraryRepository.listActiveDocumentsForExport normalizes rows with project_slug', async () => {
   const captured = [];
   const fakeDb = {
@@ -180,4 +219,8 @@ test('createLibraryRepository.listActiveDocumentsForExport normalizes rows with 
   assert.equal(rows[0].projectSlug, 'homelab');
   assert.equal(rows[0].title, 'Restore');
   assert.equal(rows[0].documentType, 'runbook');
+  assert.equal(captured.length, 1);
+  assert.match(captured[0].text, /join projects p on p\.id = d\.project_id/);
+  assert.match(captured[0].text, /d\.archived_at is null/);
+  assert.deepEqual(captured[0].values, [PROJECT_UUID]);
 });
