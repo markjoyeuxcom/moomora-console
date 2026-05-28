@@ -445,6 +445,19 @@ html {
   overflow: hidden;
 }
 
+/* Task views: flex column so #workspace absorbs vertical slack and the footer
+   pins to the bottom. (The base grid-template-rows assumed a content-header row
+   that no longer exists, which left the 1fr track on the footer.) Library keeps
+   its own grid layout above. */
+.console-main:not(.console-main--library) {
+  display: flex;
+  flex-direction: column;
+}
+.console-main:not(.console-main--library) > #workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 /* ============================================================
    Topbar — search, bracket-button, icon-action
    ============================================================ */

@@ -354,7 +354,11 @@ function renderWorkspace() {
   const selectedTaskId = task?.id || null;
   const readOnly = isArchiveView(state.activeView);
   const isBoardView = state.activeView === 'board';
-  const shouldRenderTaskDetail = state.taskDetailOpen && Boolean(task);
+  // Only render the drawer for the task the user actually selected. selectedTask()
+  // falls back to visibleTasks[0] when the selected id is no longer visible (search
+  // filtered it out, or it was archived/deleted) — rendering that fallback would show
+  // the WRONG task in an open drawer, so gate on an exact id match.
+  const shouldRenderTaskDetail = state.taskDetailOpen && Boolean(task) && task.id === state.selectedTaskId;
   const taskDetailHtml = shouldRenderTaskDetail
     ? `<div class="task-detail-drawer" data-task-detail-drawer>
          <div class="task-detail-resizer" data-task-detail-resizer role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize detail"></div>
