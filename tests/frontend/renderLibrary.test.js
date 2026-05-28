@@ -401,3 +401,23 @@ test('renderLibraryHtml hides [x] export when the editor pane is not visible', (
   });
   assert.doesNotMatch(html, /data-action="export-document"/);
 });
+
+test('renderLibraryHtml hides [x] export when the document is archived (even in edit mode)', () => {
+  const html = renderLibraryHtml({
+    documents: [{
+      id: 'd1',
+      title: 'Old runbook',
+      body: '# old',
+      documentType: 'runbook',
+      projectId: 'p1',
+      tags: [],
+      sourceFilename: null,
+      archivedAt: '2026-05-01T00:00:00.000Z',
+      createdAt: 'then',
+      updatedAt: 'then',
+    }],
+    selectedDocumentId: 'd1',
+    editorMode: 'edit',
+  });
+  assert.doesNotMatch(html, /data-action="export-document"/);
+});
