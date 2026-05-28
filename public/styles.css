@@ -440,7 +440,11 @@ html {
 }
 
 .console-main--library {
-  grid-template-rows: auto auto minmax(0, 1fr);
+  /* Rows: topbar (auto) · workspace (flexible) · footer (auto, pinned bottom).
+     The workspace must take the 1fr track — when it had `auto auto minmax(0,1fr)`
+     (a layout that assumed the removed content-header), the flexible row fell on
+     the footer instead, so it floated on short docs and scrolled away on long ones. */
+  grid-template-rows: auto minmax(0, 1fr) auto;
   height: 100vh;
   overflow: hidden;
 }
