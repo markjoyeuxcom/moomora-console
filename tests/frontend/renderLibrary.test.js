@@ -361,3 +361,43 @@ test('renderLibraryHtml renders flat list when groupByType is false', () => {
   assert.match(html, /data-library-document-id="doc-1"/);
   assert.match(html, /data-library-document-id="doc-2"/);
 });
+
+test('renderLibraryHtml shows [x] export on the editor toolbar for active docs', () => {
+  const html = renderLibraryHtml({
+    documents: [{
+      id: 'd1',
+      title: 'Restore',
+      body: '# r',
+      documentType: 'runbook',
+      projectId: 'p1',
+      tags: [],
+      sourceFilename: null,
+      archivedAt: null,
+      createdAt: 'now',
+      updatedAt: 'now',
+    }],
+    selectedDocumentId: 'd1',
+    editorMode: 'edit',
+  });
+  assert.match(html, /data-action="export-document"[^>]*data-document-id="d1"[^>]*>\[x\] export/);
+});
+
+test('renderLibraryHtml hides [x] export when the editor pane is not visible', () => {
+  const html = renderLibraryHtml({
+    documents: [{
+      id: 'd1',
+      title: 'Restore',
+      body: '',
+      documentType: 'note',
+      projectId: 'p1',
+      tags: [],
+      sourceFilename: null,
+      archivedAt: null,
+      createdAt: 'now',
+      updatedAt: 'now',
+    }],
+    selectedDocumentId: 'd1',
+    editorMode: 'preview',
+  });
+  assert.doesNotMatch(html, /data-action="export-document"/);
+});
