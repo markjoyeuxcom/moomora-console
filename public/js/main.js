@@ -1539,6 +1539,7 @@ function renderApp() {
       activeProject: state.activeProject,
       projects: state.projects,
       taskCount: state.tasks.length,
+      documentCount: (state.documents || []).filter(d => !d.archivedAt && (state.activeProject === 'all' || d.projectId === state.activeProject)).length,
       importMode: state.adminImportMode,
     }));
   }
@@ -1973,6 +1974,17 @@ function bindAdminPanelEvents() {
 
   panel.querySelector('[data-action="export-all"]')?.addEventListener('click', () => {
     exportAdminTasks('all');
+  });
+
+  panel.querySelector('[data-action="export-library-project"]')?.addEventListener('click', () => {
+    const scope = state.activeProject === 'all'
+      ? 'all'
+      : (state.projects.find(p => p.id === state.activeProject)?.slug || 'all');
+    window.location.href = `/api/library/export?project=${encodeURIComponent(scope)}`;
+  });
+
+  panel.querySelector('[data-action="export-library-all"]')?.addEventListener('click', () => {
+    window.location.href = '/api/library/export?project=all';
   });
 
   panel.querySelectorAll('[data-admin-import-mode]').forEach((control) => {
