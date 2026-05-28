@@ -150,3 +150,27 @@ test('GET /api/library/export on empty library returns a valid empty ZIP', async
   const entries = readZipEntries(response.rawPayload);
   assert.equal(entries.length, 0);
 });
+
+test('GET /api/library/export propagates listActiveDocumentsForExport errors as 500', async () => {
+  const failingLibrary = {
+    async listDocuments() { return []; },
+    async createDocument() { throw new Error('not used'); },
+    async updateDocument() { throw new Error('not used'); },
+    async archiveDocument() { throw new Error('not used'); },
+    async restoreDocument() { throw new Error('not used'); },
+    async deleteArchivedDocument() { throw new Error('not used'); },
+    async listActiveDocumentsForExport() { throw new Error('database is down'); },
+  };
+  const app = await buildApp({
+    logger: false,
+    skipDb: true,
+    libraryRepository: failingLibrary,
+    projectsRepository: createFakeProjects(),
+  });
+  const response = await app.inject({ method: 'GET', url: '/api/library/export?project=all' });
+  await app.close();
+
+  assert.equal(response.statusCode, 500);
+  // Fastify's default error response is JSON with a `message` field; the body should NOT be a ZIP
+  assert.doesNotMatch(response.headers['content-type'] || '', /application\/zip/);
+});

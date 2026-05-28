@@ -119,14 +119,15 @@ export async function registerLibraryRoutes(app, options = {}) {
     const archive = archiver('zip', { zlib: { level: 6 } });
     archive.on('error', (err) => {
       request.log.error({ err }, 'library export archive error');
-      reply.raw.destroy(err);
     });
 
     for (const entry of entries) {
       const content = renderDocumentMarkdown(entry.doc, entry.doc.projectSlug);
       archive.append(content, { name: `${entry.path}${entry.filename}` });
     }
-    archive.finalize();
+    archive.finalize().catch((err) => {
+      request.log.error({ err }, 'library export archive finalize rejected');
+    });
 
     return reply.send(archive);
   });
