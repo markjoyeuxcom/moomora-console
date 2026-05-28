@@ -441,7 +441,7 @@ function renderWorkspace() {
 
   workspace.querySelectorAll('[data-action="close-mobile-detail"]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      setState({ mobileDetailOpen: false });
+      setState({ taskDetailOpen: false, mobileDetailOpen: false });
       renderWorkspace();
     });
   });
