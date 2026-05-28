@@ -650,76 +650,70 @@ function renderWorkspace() {
   });
 }
 
-function setupLibraryResizer(workspace, libraryWorkspaceElement) {
-  const resizer = workspace.querySelector('[data-library-resizer]');
-  const browser = workspace.querySelector('.library-browser');
-  if (!resizer || !browser) return;
-
-  const MIN_WIDTH = 220;
-  const MAX_WIDTH = 560;
-
+// Generic drag-to-resize for a pane. edge:'right' grows the pane as the pointer
+// moves right (left-docked browser); edge:'left' grows it as the pointer moves
+// left (right-docked drawer). Width is applied to `target` as `cssVar` and
+// persisted under `storageKey`.
+function setupPaneResizer({ resizer, pane, target, cssVar, storageKey, min, max, edge = 'right' }) {
+  if (!resizer || !pane || !target) return;
   const applyWidth = (width) => {
-    const clamped = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, width));
-    libraryWorkspaceElement.style.setProperty('--library-browser-width', `${clamped}px`);
+    const clamped = Math.min(max, Math.max(min, width));
+    target.style.setProperty(cssVar, `${clamped}px`);
     return clamped;
   };
+  let saved = null;
+  try { saved = window.localStorage?.getItem(storageKey); } catch { saved = null; }
+  if (saved) applyWidth(parseInt(saved, 10) || min);
 
-  let savedWidth = null;
-  try {
-    savedWidth = window.localStorage?.getItem(LIBRARY_BROWSER_WIDTH_KEY);
-  } catch {
-    savedWidth = null;
-  }
-  if (savedWidth) applyWidth(parseInt(savedWidth, 10) || MIN_WIDTH);
+  const persist = () => {
+    try {
+      const current = target.style.getPropertyValue(cssVar);
+      if (current) window.localStorage?.setItem(storageKey, current.trim());
+    } catch { /* convenience only */ }
+  };
 
-  const startDrag = (event) => {
+  resizer.addEventListener('pointerdown', (event) => {
     event.preventDefault();
     const startX = event.clientX;
-    const startWidth = browser.getBoundingClientRect().width;
+    const startWidth = pane.getBoundingClientRect().width;
     resizer.classList.add('is-dragging');
     resizer.setPointerCapture?.(event.pointerId);
-
-    const onMove = (moveEvent) => {
-      applyWidth(startWidth + (moveEvent.clientX - startX));
-    };
+    const sign = edge === 'left' ? -1 : 1;
+    const onMove = (m) => applyWidth(startWidth + sign * (m.clientX - startX));
     const onEnd = () => {
       resizer.classList.remove('is-dragging');
       resizer.releasePointerCapture?.(event.pointerId);
       resizer.removeEventListener('pointermove', onMove);
       resizer.removeEventListener('pointerup', onEnd);
       resizer.removeEventListener('pointercancel', onEnd);
-      try {
-        const current = libraryWorkspaceElement.style.getPropertyValue('--library-browser-width');
-        if (current) window.localStorage?.setItem(LIBRARY_BROWSER_WIDTH_KEY, current.trim());
-      } catch {
-        // persistence is a convenience; resize still works without it
-      }
+      persist();
     };
-
     resizer.addEventListener('pointermove', onMove);
     resizer.addEventListener('pointerup', onEnd);
     resizer.addEventListener('pointercancel', onEnd);
-  };
-
-  resizer.addEventListener('pointerdown', startDrag);
+  });
 
   resizer.addEventListener('keydown', (event) => {
-    const step = event.shiftKey ? 32 : 16;
-    if (event.key === 'ArrowLeft') {
-      event.preventDefault();
-      applyWidth(browser.getBoundingClientRect().width - step);
-    } else if (event.key === 'ArrowRight') {
-      event.preventDefault();
-      applyWidth(browser.getBoundingClientRect().width + step);
-    } else {
-      return;
-    }
-    try {
-      const current = libraryWorkspaceElement.style.getPropertyValue('--library-browser-width');
-      if (current) window.localStorage?.setItem(LIBRARY_BROWSER_WIDTH_KEY, current.trim());
-    } catch {
-      // ignore
-    }
+    const step = (event.shiftKey ? 32 : 16) * (edge === 'left' ? -1 : 1);
+    if (event.key === 'ArrowLeft') { event.preventDefault(); applyWidth(pane.getBoundingClientRect().width - step); }
+    else if (event.key === 'ArrowRight') { event.preventDefault(); applyWidth(pane.getBoundingClientRect().width + step); }
+    else { return; }
+    persist();
+  });
+}
+
+function setupLibraryResizer(workspace, libraryWorkspaceElement) {
+  const resizer = workspace.querySelector('[data-library-resizer]');
+  const browser = workspace.querySelector('.library-browser');
+  setupPaneResizer({
+    resizer,
+    pane: browser,
+    target: libraryWorkspaceElement,
+    cssVar: '--library-browser-width',
+    storageKey: LIBRARY_BROWSER_WIDTH_KEY,
+    min: 220,
+    max: 560,
+    edge: 'right',
   });
 }
 
