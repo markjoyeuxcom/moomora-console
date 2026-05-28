@@ -355,23 +355,26 @@ function renderWorkspace() {
   const selectedTaskId = task?.id || null;
   const readOnly = isArchiveView(state.activeView);
   const isBoardView = state.activeView === 'board';
-  const shouldRenderTaskDetail = !isBoardView || state.isBoardTaskDetailOpen;
+  const shouldRenderTaskDetail = state.taskDetailOpen && Boolean(task);
   const taskDetailHtml = shouldRenderTaskDetail
-    ? renderTaskDetailHtml(task, {
-        readOnly,
-        restoreAction: readOnly,
-        deleteAction: readOnly,
-        mobileDetailOpen: state.mobileDetailOpen,
-        linkedDocuments: state.taskDocuments,
-        checklistItems: state.taskChecklist,
-        activityEvents: state.taskActivity,
-        activeTaskDetailTab: state.activeTaskDetailTab,
-        activeTaskDetailSection: state.activeTaskDetailSection,
-        taskNotesDraft: taskNotesDraftFor(task),
-        isTaskNotesDirty: Boolean(task && state.taskNotesDraftId === task.id && state.isTaskNotesDirty),
-        taskNotesSavedAt: task && state.taskNotesDraftId === task.id ? state.taskNotesSavedAt : '',
-        closeAction: isBoardView ? 'close-board-task-detail' : '',
-      })
+    ? `<div class="task-detail-drawer" data-task-detail-drawer>
+         <div class="task-detail-resizer" data-task-detail-resizer role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize detail"></div>
+         ${renderTaskDetailHtml(task, {
+           readOnly,
+           restoreAction: readOnly,
+           deleteAction: readOnly,
+           mobileDetailOpen: state.mobileDetailOpen,
+           linkedDocuments: state.taskDocuments,
+           checklistItems: state.taskChecklist,
+           activityEvents: state.taskActivity,
+           activeTaskDetailTab: state.activeTaskDetailTab,
+           activeTaskDetailSection: state.activeTaskDetailSection,
+           taskNotesDraft: taskNotesDraftFor(task),
+           isTaskNotesDirty: Boolean(task && state.taskNotesDraftId === task.id && state.isTaskNotesDirty),
+           taskNotesSavedAt: task && state.taskNotesDraftId === task.id ? state.taskNotesSavedAt : '',
+           closeAction: 'close-task-detail',
+         })}
+       </div>`
     : '';
 
   workspace.innerHTML = [
@@ -380,7 +383,20 @@ function renderWorkspace() {
   ].join('');
 
   workspace.classList.toggle('is-mobile-detail-open', Boolean(state.mobileDetailOpen));
-  workspace.classList.toggle('is-board-detail-open', Boolean(isBoardView && state.isBoardTaskDetailOpen));
+  workspace.classList.toggle('is-task-detail-open', Boolean(state.taskDetailOpen));
+
+  if (state.taskDetailOpen) {
+    setupPaneResizer({
+      resizer: workspace.querySelector('[data-task-detail-resizer]'),
+      pane: workspace.querySelector('[data-task-detail-drawer]'),
+      target: workspace,
+      cssVar: '--task-detail-width',
+      storageKey: 'moomora.taskDetailWidth.v1',
+      min: 300,
+      max: 640,
+      edge: 'left',
+    });
+  }
 
   workspace.querySelectorAll('[data-task-id]').forEach((row) => {
     row.addEventListener('click', async () => {
@@ -388,6 +404,7 @@ function renderWorkspace() {
       const keepDraft = state.taskNotesDraftId === row.dataset.taskId && state.isTaskNotesDirty;
       setState({
         selectedTaskId: row.dataset.taskId,
+        taskDetailOpen: true,
         mobileDetailOpen: isMobile() ? true : state.mobileDetailOpen,
         activeTaskDetailTab: isMobile() ? 'work' : state.activeTaskDetailTab,
         activeTaskDetailSection: 'docs',
@@ -401,6 +418,11 @@ function renderWorkspace() {
       await loadTaskActivity(row.dataset.taskId);
       renderWorkspace();
     });
+  });
+
+  workspace.querySelector('[data-action="close-task-detail"]')?.addEventListener('click', () => {
+    setState({ taskDetailOpen: false, mobileDetailOpen: false });
+    renderWorkspace();
   });
 
   workspace.querySelectorAll('[data-action="set-task-detail-tab"]').forEach((btn) => {
@@ -422,11 +444,6 @@ function renderWorkspace() {
       setState({ mobileDetailOpen: false });
       renderWorkspace();
     });
-  });
-
-  workspace.querySelector('[data-action="close-board-task-detail"]')?.addEventListener('click', () => {
-    setState({ isBoardTaskDetailOpen: false });
-    renderWorkspace();
   });
 
   bindBoardEvents(workspace);
@@ -1238,7 +1255,7 @@ function handleOpenBoardTaskDetail(event) {
   if (!taskId) return;
   setState({
     selectedTaskId: taskId,
-    isBoardTaskDetailOpen: true,
+    taskDetailOpen: true,
     activeTaskDetailSection: 'summary',
     activeTaskDetailTab: 'summary',
   });
@@ -1701,7 +1718,7 @@ function bindShellEvents() {
         documentInfoError: '',
         isDrawerOpen: false,
         mobileDetailOpen: false,
-        isBoardTaskDetailOpen: false,
+        taskDetailOpen: false,
         isLibraryDocOpen: false,
         isLinkPickerOpen: false,
       });
@@ -1798,7 +1815,7 @@ function bindShellEvents() {
         documentInfoError: '',
         isDrawerOpen: false,
         mobileDetailOpen: false,
-        isBoardTaskDetailOpen: false,
+        taskDetailOpen: false,
         isLibraryDocOpen: false,
         isLinkPickerOpen: false,
       });
@@ -2490,6 +2507,7 @@ async function init() {
         const closer = app.querySelector('[data-action="close-task-form"], [data-action="close-document-form"], [data-action="close-admin"], [data-action="close-settings"], [data-action="close-link-picker"], [data-action="close-project-manager"]');
         if (closer) { closer.click(); return; }
         if (state.isDrawerOpen) { app.querySelector('[data-action="toggle-drawer"]')?.click(); return; }
+        if (state.taskDetailOpen) { setState({ taskDetailOpen: false, mobileDetailOpen: false }); renderWorkspace(); return; }
         if (state.mobileDetailOpen) { app.querySelector('[data-action="close-mobile-detail"]')?.click(); return; }
         if (state.isLibraryDocOpen) { app.querySelector('[data-action="close-library-doc"]')?.click(); return; }
       },
