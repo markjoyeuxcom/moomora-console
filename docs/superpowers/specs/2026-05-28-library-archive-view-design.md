@@ -136,7 +136,11 @@ The list controls all keep working unchanged because they operate over `state.do
 
 The bottom-nav `[+] new doc` slot and any "new document" button in the Library workspace render an empty string when `libraryView === 'archive'`. You cannot create directly into archive.
 
-**Admin panel doc count.** The Library section in the Admin panel ([public/js/renderAdminPanel.js](public/js/renderAdminPanel.js)) shows a per-project document count computed from `state.documents.filter(d => !d.archivedAt && ...).length` ([public/js/main.js:1542](public/js/main.js:1542)). With the new loader, `state.documents` contains only one of {active, archived}, so this count would read `0` when Admin is opened from the archive view. Fix: when opening Admin, force `libraryView` back to `'active'` (which already triggers `loadDocuments` re-fetch) before computing the count. This is one extra line in the `open-admin` handler. Admin is conceptually an "operations" surface and always reflects the active library — symmetrical with how Admin counts tasks (it doesn't show archived task counts either).
+**Admin panel doc count.** The Library section in the Admin panel ([public/js/renderAdminPanel.js](public/js/renderAdminPanel.js)) shows a per-project document count computed from `state.documents.filter(d => !d.archivedAt && ...).length` ([public/js/main.js:1542](public/js/main.js:1542)). With the new loader, `state.documents` contains only one of {active, archived}, so this count would read `0` when Admin is opened from the archive view.
+
+Fix: cache the active count on every active-mode fetch. Add `state.libraryActiveDocumentCount: number` (default `0`). At the end of `loadDocuments`, if `state.libraryView === 'active'`, recompute and store the count from the freshly-fetched `documents` array. When rendering the Admin panel, read `state.libraryActiveDocumentCount` instead of recomputing from `state.documents`. The count may be one fetch stale if you've been in archive view for a while, but it's accurate as of the last visit to the active view — acceptable for an informational metric on an Admin surface.
+
+This avoids the alternative of forcing `libraryView` back to `'active'` when Admin opens, which would surprise the user by dropping them out of the archive view they were inspecting.
 
 ## 5. Error handling and edge cases
 
@@ -184,7 +188,7 @@ The bottom-nav `[+] new doc` slot and any "new document" button in the Library w
 
 ## Build order
 
-1. State + loader change (`state.libraryView`, `loadDocuments` archived flag) + reset triggers (project change, view change, Library nav, open-admin). Tests for the state transitions.
+1. State + loader change (`state.libraryView`, `state.libraryActiveDocumentCount`, `loadDocuments` archived flag, active-mode count cache update) + reset triggers (project change, view change, Library nav). Tests for the state transitions.
 2. Renderer changes (`renderLibraryHtml` toggle button, kicker, count copy; `renderDocumentList` empty-state branch; `renderDocumentDetail` editor-pane suppression in archive mode). Tests for the rendered HTML.
 3. Handler wiring (`toggle-library-view` click handler in main.js library bind block). No new test surface beyond what the render and state tests already cover; the click handler is a one-liner setState + loadDocuments.
 
@@ -206,7 +210,7 @@ The bottom-nav `[+] new doc` slot and any "new document" button in the Library w
 - Toggling `libraryView` from `'active'` to `'archive'` clears `selectedDocumentId`.
 - Changing `activeProject` resets `libraryView` to `'active'`.
 - Changing `activeView` to anything else and back to `'library'` resets `libraryView` to `'active'`.
-- Opening Admin (`isAdminPanelOpen: true`) resets `libraryView` to `'active'`.
+- A successful active-mode `loadDocuments` updates `state.libraryActiveDocumentCount` to the new active count; archive-mode `loadDocuments` leaves it untouched.
 
 ### Backend
 
@@ -226,6 +230,6 @@ No change. The existing `tests/backend/libraryRepository.test.js` coverage of `a
 ## Risks / notes
 
 - The `loadDocuments` change ripples to every caller indirectly. Because every caller reads `state.libraryView` from state (and the default is `'active'`), the behaviour for any caller that doesn't care about archive is unchanged. The risk surface is the reset triggers: forgetting one (e.g. Library nav click) means the user lands on a stale archive view. The state tests cover each reset trigger.
-- The Admin panel doc-count fix relies on always forcing back to active before Admin opens. If a future feature adds an "Archive operations" Admin section, it would have to opt out — out of scope here.
+- The Admin panel doc-count cache (`state.libraryActiveDocumentCount`) can be one fetch stale when Admin is opened from a long-lived archive view session. Trade-off accepted: the metric is informational, the alternative (forcing `libraryView` back to active on Admin open) would surprise the user on Admin close.
 - No backend, no MCP, no route changes. The blast radius of the diff is contained to three frontend files and their tests: `public/js/renderLibrary.js`, `public/js/main.js`, and one test file (plus possibly a small new one).
 - The defensive `isArchived` path in the active view's detail panel (rendering restore/delete for a doc that "shouldn't" be there) is a renderer contract, not a UI surface. The loader guarantees prevent it from being exercised in practice. Keeping it costs nothing and protects against future loader regressions.
