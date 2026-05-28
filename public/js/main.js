@@ -44,7 +44,6 @@ import { renderListHtml, renderSwimlaneListHtml, renderListToolbar } from './ren
 import {
   renderBoardFilters,
   renderBoardHtml,
-  renderBoardInspectorHtml,
   renderBoardToolbar,
   renderSwimlaneBoardHtml,
 } from './renderBoard.js';
@@ -1495,8 +1494,6 @@ function renderWorkspacePrimary(visibleTasks, selectedTaskId) {
     const isAllProjects = state.activeProject === 'all';
     const useSwimlanes = state.boardGrouping === 'swimlanes' && isAllProjects;
     const boardTasks = applyBoardFilters(visibleTasks, state.boardFilters, state.taskBoardExtras, today());
-    const selected = state.tasks.find(task => task.id === selectedTaskId) || null;
-    const inspector = renderBoardInspectorHtml(selected, state.taskBoardExtras?.[selectedTaskId] || {}, { today: today() });
     const board = useSwimlanes
       ? renderSwimlaneBoardHtml(boardTasks, selectedTaskId, {
           today: today(),
@@ -1516,7 +1513,7 @@ function renderWorkspacePrimary(visibleTasks, selectedTaskId) {
     // Wrap in one element so the .workspace grid treats the board as a single
     // primary cell — otherwise the prepended toolbar becomes a second grid item
     // and the board spills into the detail column.
-    return `<div class="board-view">${toolbar}${filters}${inspector}${board}</div>`;
+    return `<div class="board-view">${toolbar}${filters}${board}</div>`;
   }
 
   const listOptions = listOptionsForView(state.activeView);

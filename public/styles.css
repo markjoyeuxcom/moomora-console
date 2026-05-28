@@ -942,7 +942,7 @@ button.task-row:hover { background: color-mix(in srgb, var(--accent) 4%, transpa
   display: grid;
   align-content: start;
   gap: 8px;
-  min-height: 200px;
+  min-height: 64px;
   padding: 8px;
   border: 1px solid transparent;
 }
