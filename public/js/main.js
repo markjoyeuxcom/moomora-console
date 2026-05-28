@@ -766,9 +766,14 @@ function renderLibraryWorkspace(workspace) {
   });
 
   workspace.querySelector('[data-action="toggle-library-view"]')?.addEventListener('click', async () => {
+    clearDocumentAutosave();
     setState({
       libraryView: state.libraryView === 'archive' ? 'active' : 'archive',
       selectedDocumentId: null,
+      documentDraftId: null,
+      documentDraftBody: '',
+      isDocumentDirty: false,
+      isDocumentFocusMode: false,
     });
     try {
       await loadDocuments({ selectedDocumentId: null });
