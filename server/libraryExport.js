@@ -1,10 +1,10 @@
-const YAML_QUOTE_TRIGGER = /[:"\\\n]|^-|^\s|\s$/
+const YAML_QUOTE_TRIGGER = /[:"\\\n#]|^-|^\s|\s$/
 
 function yamlString(value) {
   const str = String(value ?? '')
   if (str === '') return '""'
   if (!YAML_QUOTE_TRIGGER.test(str)) return str
-  return `"${str.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+  return `"${str.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/"/g, '\\"')}"`
 }
 
 export function formatFrontMatter(doc, projectSlug) {
@@ -17,8 +17,8 @@ export function formatFrontMatter(doc, projectSlug) {
   return [
     '---',
     `title: ${yamlString(doc.title || '')}`,
-    `type: ${doc.documentType || 'note'}`,
-    `project: ${slug}`,
+    `type: ${yamlString(doc.documentType || 'note')}`,
+    `project: ${yamlString(slug)}`,
     tagsBlock,
     `created_at: ${doc.createdAt || ''}`,
     `updated_at: ${doc.updatedAt || ''}`,
@@ -30,6 +30,7 @@ export function formatFrontMatter(doc, projectSlug) {
 export function renderDocumentMarkdown(doc, projectSlug) {
   const frontMatter = formatFrontMatter(doc, projectSlug)
   const body = String(doc.body ?? '')
+  if (body === '') return frontMatter
   const bodyWithNewline = body.endsWith('\n') ? body : `${body}\n`
   return `${frontMatter}\n${bodyWithNewline}`
 }
@@ -59,16 +60,24 @@ export function documentFilename(doc) {
 }
 
 export function dedupeFilenames(entries) {
-  const counts = new Map()
+  const seen = new Map() // path -> Set of claimed filenames
   for (const entry of entries) {
-    const key = `${entry.path}${entry.filename}`
-    const n = counts.get(key) || 0
-    counts.set(key, n + 1)
-    if (n > 0) {
-      const ext = entry.filename.match(/\.md$/i)?.[0] || ''
-      const stem = entry.filename.slice(0, entry.filename.length - ext.length)
-      entry.filename = `${stem}-${n + 1}${ext}`
+    const claimed = seen.get(entry.path) || new Set()
+    seen.set(entry.path, claimed)
+    if (!claimed.has(entry.filename)) {
+      claimed.add(entry.filename)
+      continue
     }
+    const ext = entry.filename.match(/\.md$/i)?.[0] || ''
+    const stem = entry.filename.slice(0, entry.filename.length - ext.length)
+    let n = 2
+    let candidate
+    do {
+      candidate = `${stem}-${n}${ext}`
+      n += 1
+    } while (claimed.has(candidate))
+    entry.filename = candidate
+    claimed.add(candidate)
   }
 }
 

@@ -45,6 +45,8 @@ test('formatFrontMatter double-quotes titles with YAML-significant chars', () =>
     { title: 'Has "quote"', expect: '"Has \\"quote\\""' },
     { title: 'Back\\slash', expect: '"Back\\\\slash"' },
     { title: '- leading dash', expect: '"- leading dash"' },
+    { title: 'line1\nline2', expect: '"line1\\nline2"' },
+    { title: '#heading', expect: '"#heading"' },
   ]
   for (const { title, expect } of cases) {
     const fm = formatFrontMatter({ ...BASE_DOC, title }, 'homelab')
@@ -57,12 +59,30 @@ test('formatFrontMatter falls back to "unknown" when project slug is missing', (
   assert.match(fm, /\nproject: unknown\n/)
 })
 
+test('formatFrontMatter quotes tags with YAML-significant chars in the block sequence', () => {
+  const fm = formatFrontMatter({ ...BASE_DOC, tags: ['#urgent', 'has: colon'] }, 'homelab')
+  assert.match(fm, /\n  - "#urgent"\n/)
+  assert.match(fm, /\n  - "has: colon"\n/)
+})
+
+test('formatFrontMatter quotes type and project values containing YAML-significant chars', () => {
+  const fm = formatFrontMatter({ ...BASE_DOC, documentType: 'has: colon' }, 'weird: slug')
+  assert.match(fm, /\ntype: "has: colon"\n/)
+  assert.match(fm, /\nproject: "weird: slug"\n/)
+})
+
 test('renderDocumentMarkdown writes front-matter, blank line, body, single trailing newline', () => {
   const out = renderDocumentMarkdown(BASE_DOC, 'homelab')
   assert.ok(out.startsWith('---\n'))
   assert.ok(out.includes('\n---\n\n# Postgres restore\n'))
   assert.ok(out.endsWith('\n'))
   assert.ok(!out.endsWith('\n\n'))
+})
+
+test('renderDocumentMarkdown with empty body ends with exactly one newline', () => {
+  const out = renderDocumentMarkdown({ ...BASE_DOC, body: '' }, 'homelab')
+  assert.ok(out.endsWith('---\n'))
+  assert.ok(!out.endsWith('---\n\n'))
 })
 
 test('renderDocumentMarkdown preserves body containing literal --- lines', () => {
@@ -112,6 +132,18 @@ test('dedupeFilenames suffixes collisions within the same path prefix', () => {
   dedupeFilenames(entries)
   assert.deepEqual(entries.map(e => `${e.path}${e.filename}`), [
     'foo.md', 'foo-2.md', 'foo-3.md', 'work/foo.md',
+  ])
+})
+
+test('dedupeFilenames probes past pre-existing suffixed entries', () => {
+  const entries = [
+    { path: 'proj/', filename: 'foo.md' },
+    { path: 'proj/', filename: 'foo-2.md' },
+    { path: 'proj/', filename: 'foo.md' },
+  ]
+  dedupeFilenames(entries)
+  assert.deepEqual(entries.map(e => `${e.path}${e.filename}`), [
+    'proj/foo.md', 'proj/foo-2.md', 'proj/foo-3.md',
   ])
 })
 
