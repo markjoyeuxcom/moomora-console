@@ -5,6 +5,7 @@ import {
   renderDocumentMarkdown,
   documentFilename,
   libraryArchiveFilename,
+  dedupeFilenames,
 } from '../../server/libraryExport.js';
 import { buildExportedMarkdown } from '../../public/js/libraryExport.js';
 
@@ -86,4 +87,18 @@ test('CONTRACT: libraryArchiveFilename shape is frozen', () => {
   const date = new Date('2026-05-29T12:00:00.000Z');
   assert.equal(libraryArchiveFilename('homelab', date), 'moomora-console-library-homelab-2026-05-29.zip');
   assert.equal(libraryArchiveFilename('', date), 'moomora-console-library-all-2026-05-29.zip');
+});
+
+test('CONTRACT: dedupeFilenames suffixes per-folder collisions with -N before .md', () => {
+  const entries = [
+    { path: 'homelab', filename: 'restore.md' },
+    { path: 'homelab', filename: 'restore.md' },
+    { path: 'homelab', filename: 'restore.md' },
+    { path: 'other', filename: 'restore.md' },
+  ];
+  dedupeFilenames(entries);
+  assert.deepEqual(
+    entries.map((e) => e.filename),
+    ['restore.md', 'restore-2.md', 'restore-3.md', 'restore.md'],
+  );
 });
